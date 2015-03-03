@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-const Infinity = math.MaxInt8
+const Infinity = math.MaxInt32
 
 // pos denotes position in data string.
-type pos int8
+type pos int32
 
 // STree is a struct representing a suffix tree.
 type STree struct {

@@ -199,3 +199,12 @@ func TestPosMaxValue(t *testing.T) {
 		t.Error("const Infinity is not max value")
 	}
 }
+
+func BenchmarkConstruction(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		t := New()
+		t.Update(`all work and no play makes jack a dull boy
+all work and no play makes jack a dull boy
+all work and no play makes jack a dull boy`)
+	}
+}
