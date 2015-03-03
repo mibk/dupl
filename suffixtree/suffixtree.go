@@ -9,10 +9,10 @@ import (
 
 const Inf = math.MaxInt8
 
-// pos denotes position in data string
+// pos denotes position in data string.
 type pos int8
 
-// STree is a struct representing a suffix tree
+// STree is a struct representing a suffix tree.
 type STree struct {
 	data     string
 	root     *state
@@ -33,6 +33,7 @@ func New() *STree {
 	return t
 }
 
+// Update refreshes the suffix tree to by new data.
 func (t *STree) Update(data string) {
 	spos := pos(len(t.data))
 	t.data += data
@@ -138,7 +139,7 @@ func printState(buf *bytes.Buffer, s *state, ident int) {
 	}
 }
 
-// state is an explicit state of the suffix tree
+// state is an explicit state of the suffix tree.
 type state struct {
 	t         *STree
 	trans     []*tran
@@ -157,12 +158,14 @@ func (s *state) addTran(start, end pos, r *state) {
 	s.trans = append(s.trans, newTran(start, end, r))
 }
 
+// fork creates a new branch from the state s.
 func (s *state) fork(i pos) *state {
 	r := newState(s.t)
 	s.addTran(i, Inf, r)
 	return r
 }
 
+// findTran finds c-transition.
 func (s *state) findTran(c byte) *tran {
 	for _, tran := range s.trans {
 		if s.t.data[tran.start] == c {
@@ -172,7 +175,7 @@ func (s *state) findTran(c byte) *tran {
 	return nil
 }
 
-// tran represents a state's transition
+// tran represents a state's transition.
 type tran struct {
 	start, end pos
 	state      *state
@@ -182,6 +185,8 @@ func newTran(start, end pos, s *state) *tran {
 	return &tran{start, end, s}
 }
 
+// ActEnd returns actual end position as consistent with
+// the actual length of the data in the STree.
 func (t *tran) ActEnd() pos {
 	if t.end == Inf {
 		return pos(len(t.state.t.data)) - 1
