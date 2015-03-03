@@ -175,3 +175,10 @@ func TestSplitting(t *testing.T) {
 		t.Error("should not be an end-point")
 	}
 }
+
+func TestPosMaxValue(t *testing.T) {
+	var p pos = Inf
+	if p+1 > 0 {
+		t.Error("const Inf is not max value")
+	}
+}
