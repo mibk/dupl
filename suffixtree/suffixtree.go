@@ -19,7 +19,6 @@ type STree struct {
 }
 
 var (
-	ai             = 0
 	root           *state
 	auxiliaryState *state
 )
@@ -30,8 +29,6 @@ func New(data string) *STree {
 
 	root = tree.root
 	auxiliaryState = newState(data)
-	auxiliaryState.id = 0
-	ai--
 	tree.root.linkState = auxiliaryState
 	s := tree.root
 	k := pos(0)
@@ -50,7 +47,6 @@ func (t *STree) String() string {
 
 func printState(buf *bytes.Buffer, s *state, ident int) {
 	fmt.Fprint(buf, strings.Repeat("  ", ident))
-	fmt.Fprintln(buf, "id:", s.id)
 	for _, tr := range s.trans {
 		fmt.Fprint(buf, strings.Repeat("  ", ident))
 		fmt.Fprintf(buf, "- tran: %d, %d;  '%s'\n", tr.start, tr.ActEnd(), s.data[tr.start:tr.ActEnd()+1])
@@ -60,16 +56,13 @@ func printState(buf *bytes.Buffer, s *state, ident int) {
 
 // state is an explicit state of the suffix tree
 type state struct {
-	id        int
 	data      string
 	trans     []*tran
 	linkState *state
 }
 
 func newState(data string) *state {
-	ai++
 	return &state{
-		id:        ai,
 		data:      data,
 		trans:     make([]*tran, 0),
 		linkState: nil,
