@@ -4,7 +4,7 @@ import "testing"
 
 func TestNew(t *testing.T) {
 	str := "cacao"
-	s := genStates(8, str)
+	_, s := genStates(8, str)
 	// s[0] is root
 	s[0].addTran(0, 1, s[1]) // ca
 	s[0].addTran(1, 1, s[2]) // a
@@ -16,28 +16,38 @@ func TestNew(t *testing.T) {
 	s[2].addTran(2, 4, s[4]) // cao
 	s[2].addTran(4, 4, s[5]) // o
 
-	cacao := New(str)
+	cacao := New()
+	cacao.Update(str)
 	compareTrees(t, s[0], cacao.root)
 
-	str2 := "banana$"
-	r := genStates(11, str2)
-	// r[0] is root
-	r[0].addTran(0, 6, r[1]) // banana$
-	r[0].addTran(1, 1, r[2]) // a
-	r[0].addTran(2, 3, r[3]) // na
-	r[0].addTran(6, 6, r[4]) // $
+	str2 := "banana"
+	_, r := genStates(4, str2)
+	r[0].addTran(0, 5, r[1]) // banana
+	r[0].addTran(1, 5, r[2]) // anana
+	r[0].addTran(2, 5, r[3]) // nana
 
-	r[2].addTran(2, 3, r[5]) // na
-	r[2].addTran(6, 6, r[6]) // $
-
-	r[3].addTran(4, 6, r[7]) // na$
-	r[3].addTran(6, 6, r[8]) // $
-
-	r[5].addTran(4, 6, r[9])  // na$
-	r[5].addTran(6, 6, r[10]) // $
-
-	banana := New(str2)
+	banana := New()
+	banana.Update(str2)
 	compareTrees(t, r[0], banana.root)
+
+	_, q := genStates(11, str2+"$")
+	// r[0] is root
+	q[0].addTran(0, 6, q[1]) // banana$
+	q[0].addTran(1, 1, q[2]) // a
+	q[0].addTran(2, 3, q[3]) // na
+	q[0].addTran(6, 6, q[4]) // $
+
+	q[2].addTran(2, 3, q[5]) // na
+	q[2].addTran(6, 6, q[6]) // $
+
+	q[3].addTran(4, 6, q[7]) // na$
+	q[3].addTran(6, 6, q[8]) // $
+
+	q[5].addTran(4, 6, q[9])  // na$
+	q[5].addTran(6, 6, q[10]) // $
+
+	banana.Update("$")
+	compareTrees(t, q[0], banana.root)
 }
 
 func compareTrees(t *testing.T, expected, actual *state) {
@@ -55,8 +65,8 @@ func compareTrees(t *testing.T, expected, actual *state) {
 		}
 		if etran.start != atran.start || etran.ActEnd() != atran.ActEnd() {
 			t.Errorf("got transition (%d, %d) '%s', want (%d, %d) '%s'",
-				atran.start, atran.ActEnd(), actual.data[atran.start:atran.ActEnd()],
-				etran.start, etran.ActEnd(), expected.data[etran.start:etran.ActEnd()+1],
+				atran.start, atran.ActEnd(), actual.t.data[atran.start:atran.ActEnd()+1],
+				etran.start, etran.ActEnd(), expected.t.data[etran.start:etran.ActEnd()+1],
 			)
 		}
 	}
@@ -78,12 +88,14 @@ func walk(s *state, ch chan<- *tran) {
 	}
 }
 
-func genStates(count int, data string) []*state {
+func genStates(count int, data string) (*STree, []*state) {
+	t := new(STree)
+	t.data = data
 	states := make([]*state, count)
 	for i := range states {
-		states[i] = newState(data)
+		states[i] = newState(t)
 	}
-	return states
+	return t, states
 }
 
 type refPair struct {
@@ -92,7 +104,7 @@ type refPair struct {
 }
 
 func TestCanonize(t *testing.T) {
-	s := genStates(4, "somebanana")
+	tree, s := genStates(4, "somebanana")
 	s[0].addTran(0, 3, s[1])
 	s[1].addTran(4, 6, s[2])
 	s[2].addTran(7, Inf, s[3])
@@ -118,7 +130,7 @@ func TestCanonize(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		s, start := canonize(tc.origin.s, tc.origin.start, tc.origin.end)
+		s, start := tree.canonize(tc.origin.s, tc.origin.start, tc.origin.end)
 		if s != tc.expected.s || start != tc.expected.start {
 			t.Errorf("for origin ref. pair (%d, (%d, %d)) got (%d, %d), want (%d, %d)",
 				find(tc.origin.s), tc.origin.start, tc.origin.end,
@@ -130,26 +142,30 @@ func TestCanonize(t *testing.T) {
 }
 
 func TestSplitting(t *testing.T) {
-	data := "banana"
-	s1 := newState(data)
-	s2 := newState(data)
+	tree := new(STree)
+	tree.data = "banana|cbao"
+	s1 := newState(tree)
+	s2 := newState(tree)
 	s1.addTran(0, 3, s2)
 
 	// active point is (s1, 0, -1), an explicit state
-	rets, end := testAndSplit(s1, 0, -1, 'c')
+	tree.end = 7 // c
+	rets, end := tree.testAndSplit(s1, 0, -1)
 	if rets != s1 {
 		t.Errorf("got state %p, want %p", rets, s1)
 	}
 	if end {
 		t.Error("should not be an end-point")
 	}
-	_, end = testAndSplit(s1, 0, -1, 'b')
+	tree.end = 8 // b
+	_, end = tree.testAndSplit(s1, 0, -1)
 	if !end {
 		t.Error("should be an end-point")
 	}
 
 	// active point is (s1, 0, 2), an implicit state
-	rets, end = testAndSplit(s1, 0, 2, 'a')
+	tree.end = 9 // a
+	rets, end = tree.testAndSplit(s1, 0, 2)
 	if rets != s1 {
 		t.Error("returned state should be unchanged")
 	}
@@ -158,7 +174,8 @@ func TestSplitting(t *testing.T) {
 	}
 
 	// [s1]-banana->[s2] => [s1]-ban->[rets]-ana->[s2]
-	rets, end = testAndSplit(s1, 0, 2, 'o')
+	tree.end = 10 // o
+	rets, end = tree.testAndSplit(s1, 0, 2)
 	tr := s1.findTran('b')
 	if tr == nil {
 		t.Error("should have a b-transition")
