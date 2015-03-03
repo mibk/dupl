@@ -46,10 +46,9 @@ func (t *STree) String() string {
 }
 
 func printState(buf *bytes.Buffer, s *state, ident int) {
-	fmt.Fprint(buf, strings.Repeat("  ", ident))
 	for _, tr := range s.trans {
 		fmt.Fprint(buf, strings.Repeat("  ", ident))
-		fmt.Fprintf(buf, "- tran: %d, %d;  '%s'\n", tr.start, tr.ActEnd(), s.data[tr.start:tr.ActEnd()+1])
+		fmt.Fprintf(buf, "* (%d, %d) '%s'\n", tr.start, tr.ActEnd(), s.data[tr.start:tr.ActEnd()+1])
 		printState(buf, tr.state, ident+1)
 	}
 }
