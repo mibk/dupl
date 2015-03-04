@@ -105,19 +105,19 @@ func (t *STree) canonize(s *state, start, end pos) (*state, pos) {
 		return t.root, start + 1
 	}
 
-	tr := s.findTran(s.t.data[start])
-	if tr == nil {
-		panic(fmt.Sprintf("there should be some transition for '%c' at %d", s.t.data[start], start))
-	}
-	for tr.end-tr.start <= end-start {
-		start += tr.end - tr.start + 1
-		s = tr.state
+	var tr *tran
+	for {
 		if start <= end {
 			tr = s.findTran(s.t.data[start])
 			if tr == nil {
 				panic(fmt.Sprintf("there should be some transition for '%c' at %d", s.t.data[start], start))
 			}
 		}
+		if tr.end-tr.start > end-start {
+			break
+		}
+		start += tr.end - tr.start + 1
+		s = tr.state
 	}
 	if s == nil {
 		panic("there should always be some suffix link resolution")
