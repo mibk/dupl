@@ -35,11 +35,10 @@ func New() *STree {
 
 // Update refreshes the suffix tree to by new data.
 func (t *STree) Update(data string) {
-	spos := pos(len(t.data))
 	t.data += data
-	for i := range data {
+	for _ = range data {
 		t.update()
-		t.s, t.start = t.canonize(t.s, t.start, spos+pos(i))
+		t.s, t.start = t.canonize(t.s, t.start, t.end)
 	}
 }
 
