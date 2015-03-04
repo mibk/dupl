@@ -39,6 +39,7 @@ func (t *STree) Update(data string) {
 	for _ = range data {
 		t.update()
 		t.s, t.start = t.canonize(t.s, t.start, t.end)
+		t.end++
 	}
 }
 
@@ -66,7 +67,6 @@ func (t *STree) update() {
 	// update active point
 	t.s = s
 	t.start = start
-	t.end++
 }
 
 // testAndSplit tests whether a state with canonical ref. pair

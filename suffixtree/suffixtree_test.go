@@ -2,7 +2,7 @@ package suffixtree
 
 import "testing"
 
-func TestNew(t *testing.T) {
+func TestConstruction(t *testing.T) {
 	str := "cacao"
 	_, s := genStates(8, str)
 	// s[0] is root
@@ -48,6 +48,9 @@ func TestNew(t *testing.T) {
 
 	banana.Update("$")
 	compareTrees(t, q[0], banana.root)
+
+	foo := New()
+	foo.Update("a b ac c ")
 }
 
 func compareTrees(t *testing.T, expected, actual *state) {
