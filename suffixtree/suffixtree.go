@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const Infinity = math.MaxInt32
+const infinity = math.MaxInt32
 
 // pos denotes position in data string.
 type pos int32
@@ -160,7 +160,7 @@ func (s *state) addTran(start, end pos, r *state) {
 // fork creates a new branch from the state s.
 func (s *state) fork(i pos) *state {
 	r := newState(s.t)
-	s.addTran(i, Infinity, r)
+	s.addTran(i, infinity, r)
 	return r
 }
 
@@ -187,7 +187,7 @@ func newTran(start, end pos, s *state) *tran {
 // ActEnd returns actual end position as consistent with
 // the actual length of the data in the STree.
 func (t *tran) ActEnd() pos {
-	if t.end == Infinity {
+	if t.end == infinity {
 		return pos(len(t.state.t.data)) - 1
 	}
 	return t.end

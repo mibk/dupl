@@ -107,7 +107,7 @@ func TestCanonize(t *testing.T) {
 	tree, s := genStates(4, "somebanana")
 	s[0].addTran(0, 3, s[1])
 	s[1].addTran(4, 6, s[2])
-	s[2].addTran(7, Infinity, s[3])
+	s[2].addTran(7, infinity, s[3])
 
 	find := func(needle *state) int {
 		for i, state := range s {
@@ -194,9 +194,9 @@ func TestSplitting(t *testing.T) {
 }
 
 func TestPosMaxValue(t *testing.T) {
-	var p pos = Infinity
+	var p pos = infinity
 	if p+1 > 0 {
-		t.Error("const Infinity is not max value")
+		t.Error("const infinity is not max value")
 	}
 }
 
