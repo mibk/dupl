@@ -185,6 +185,10 @@ func newTran(start, end pos, s *state) *tran {
 	return &tran{start, end, s}
 }
 
+func (t *tran) len() int {
+	return int(t.end - t.start + 1)
+}
+
 // ActEnd returns actual end position as consistent with
 // the actual length of the data in the STree.
 func (t *tran) ActEnd() pos {
