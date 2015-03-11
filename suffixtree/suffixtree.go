@@ -98,10 +98,11 @@ func (t *STree) testAndSplit(s *state, start, end pos) (exs *state, endPoint boo
 // (s, (start, end)) of state r so the new ref. pair is canonical,
 // that is, referenced from the closest explicit ancestor of r.
 func (t *STree) canonize(s *state, start, end pos) (*state, pos) {
+	if s == t.auxState {
+		s, start = t.root, start+1
+	}
 	if start > end {
 		return s, start
-	} else if s == t.auxState {
-		return t.root, start + 1
 	}
 
 	var tr *tran

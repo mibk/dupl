@@ -107,7 +107,8 @@ type refPair struct {
 }
 
 func TestCanonize(t *testing.T) {
-	tree, s := genStates(4, "somebanana")
+	tree, s := genStates(5, "somebanana")
+	tree.auxState, tree.root = s[4], s[0]
 	s[0].addTran(0, 3, s[1])
 	s[1].addTran(4, 6, s[2])
 	s[2].addTran(7, infinity, s[3])
@@ -130,6 +131,7 @@ func TestCanonize(t *testing.T) {
 		{refPair{s[0], 0, 8}, refPair{s[2], 7, 0}},
 		{refPair{s[0], 0, 6}, refPair{s[2], 7, 0}},
 		{refPair{s[0], 0, 100}, refPair{s[2], 7, 0}},
+		{refPair{s[4], -1, 100}, refPair{s[2], 7, 0}},
 	}
 
 	for _, tc := range testCases {
