@@ -4,6 +4,7 @@ import "go/token"
 
 type Node struct {
 	Type     int
+	Filename string
 	Pos, End token.Pos
 	Children []*Node
 	Owns     int

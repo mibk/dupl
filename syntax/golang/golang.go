@@ -67,30 +67,36 @@ func Parse(filename string) (*syntax.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	return trans(file), nil
+	t := &transformer{filename}
+	return t.trans(file), nil
+}
+
+type transformer struct {
+	filename string
 }
 
 // trans transforms given golang AST to uniform tree structure.
-func trans(node ast.Node) (o *syntax.Node) {
+func (t *transformer) trans(node ast.Node) (o *syntax.Node) {
 	o = syntax.NewNode()
+	o.Filename = t.filename
 	o.Pos, o.End = node.Pos(), node.End()
 
 	switch n := node.(type) {
 	case *ast.ArrayType:
 		o.Type = ArrayType
 		if n.Len != nil {
-			o.AddChildren(trans(n.Len))
+			o.AddChildren(t.trans(n.Len))
 		}
-		o.AddChildren(trans(n.Elt))
+		o.AddChildren(t.trans(n.Elt))
 
 	case *ast.AssignStmt:
 		o.Type = AssignStmt
 		for _, e := range n.Rhs {
-			o.AddChildren(trans(e))
+			o.AddChildren(t.trans(e))
 		}
 
 		for _, e := range n.Lhs {
-			o.AddChildren(trans(e))
+			o.AddChildren(t.trans(e))
 		}
 
 	case *ast.BasicLit:
@@ -98,70 +104,70 @@ func trans(node ast.Node) (o *syntax.Node) {
 
 	case *ast.BinaryExpr:
 		o.Type = BinaryExpr
-		o.AddChildren(trans(n.X), trans(n.Y))
+		o.AddChildren(t.trans(n.X), t.trans(n.Y))
 
 	case *ast.BlockStmt:
 		o.Type = BlockStmt
 		for _, stmt := range n.List {
-			o.AddChildren(trans(stmt))
+			o.AddChildren(t.trans(stmt))
 		}
 
 	case *ast.BranchStmt:
 		o.Type = BranchStmt
 		if n.Label != nil {
-			o.AddChildren(trans(n.Label))
+			o.AddChildren(t.trans(n.Label))
 		}
 
 	case *ast.CallExpr:
 		o.Type = CallExpr
-		o.AddChildren(trans(n.Fun))
+		o.AddChildren(t.trans(n.Fun))
 		for _, arg := range n.Args {
-			o.AddChildren(trans(arg))
+			o.AddChildren(t.trans(arg))
 		}
 
 	case *ast.CaseClause:
 		o.Type = CaseClause
 		for _, e := range n.List {
-			o.AddChildren(trans(e))
+			o.AddChildren(t.trans(e))
 		}
 		for _, stmt := range n.Body {
-			o.AddChildren(trans(stmt))
+			o.AddChildren(t.trans(stmt))
 		}
 
 	case *ast.ChanType:
 		o.Type = ChanType
-		o.AddChildren(trans(n.Value))
+		o.AddChildren(t.trans(n.Value))
 
 	case *ast.CommClause:
 		o.Type = CommClause
 		if n.Comm != nil {
-			o.AddChildren(trans(n.Comm))
+			o.AddChildren(t.trans(n.Comm))
 		}
 		for _, stmt := range n.Body {
-			o.AddChildren(trans(stmt))
+			o.AddChildren(t.trans(stmt))
 		}
 
 	case *ast.CompositeLit:
 		o.Type = CompositeLit
 		if n.Type != nil {
-			o.AddChildren(trans(n.Type))
+			o.AddChildren(t.trans(n.Type))
 		}
 		for _, e := range n.Elts {
-			o.AddChildren(trans(e))
+			o.AddChildren(t.trans(e))
 		}
 
 	case *ast.DeclStmt:
 		o.Type = DeclStmt
-		o.AddChildren(trans(n.Decl))
+		o.AddChildren(t.trans(n.Decl))
 
 	case *ast.DeferStmt:
 		o.Type = DeferStmt
-		o.AddChildren(trans(n.Call))
+		o.AddChildren(t.trans(n.Call))
 
 	case *ast.Ellipsis:
 		o.Type = Ellipsis
 		if n.Elt != nil {
-			o.AddChildren(trans(n.Elt))
+			o.AddChildren(t.trans(n.Elt))
 		}
 
 	case *ast.EmptyStmt:
@@ -169,19 +175,19 @@ func trans(node ast.Node) (o *syntax.Node) {
 
 	case *ast.ExprStmt:
 		o.Type = ExprStmt
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 
 	case *ast.Field:
 		o.Type = Field
 		for _, name := range n.Names {
-			o.AddChildren(trans(name))
+			o.AddChildren(t.trans(name))
 		}
-		o.AddChildren(trans(n.Type))
+		o.AddChildren(t.trans(n.Type))
 
 	case *ast.FieldList:
 		o.Type = FieldList
 		for _, field := range n.List {
-			o.AddChildren(trans(field))
+			o.AddChildren(t.trans(field))
 		}
 
 	case *ast.File:
@@ -191,52 +197,52 @@ func trans(node ast.Node) (o *syntax.Node) {
 				// skip import declarations
 				continue
 			}
-			o.AddChildren(trans(decl))
+			o.AddChildren(t.trans(decl))
 		}
 
 	case *ast.ForStmt:
 		o.Type = ForStmt
 		if n.Init != nil {
-			o.AddChildren(trans(n.Init))
+			o.AddChildren(t.trans(n.Init))
 		}
 		if n.Cond != nil {
-			o.AddChildren(trans(n.Cond))
+			o.AddChildren(t.trans(n.Cond))
 		}
 		if n.Post != nil {
-			o.AddChildren(trans(n.Post))
+			o.AddChildren(t.trans(n.Post))
 		}
-		o.AddChildren(trans(n.Body))
+		o.AddChildren(t.trans(n.Body))
 
 	case *ast.FuncDecl:
 		o.Type = FuncDecl
 		if n.Recv != nil {
-			o.AddChildren(trans(n.Recv))
+			o.AddChildren(t.trans(n.Recv))
 		}
-		o.AddChildren(trans(n.Name), trans(n.Type))
+		o.AddChildren(t.trans(n.Name), t.trans(n.Type))
 		if n.Body != nil {
-			o.AddChildren(trans(n.Body))
+			o.AddChildren(t.trans(n.Body))
 		}
 
 	case *ast.FuncLit:
 		o.Type = FuncLit
-		o.AddChildren(trans(n.Type), trans(n.Body))
+		o.AddChildren(t.trans(n.Type), t.trans(n.Body))
 
 	case *ast.FuncType:
 		o.Type = FuncType
-		o.AddChildren(trans(n.Params))
+		o.AddChildren(t.trans(n.Params))
 		if n.Results != nil {
-			o.AddChildren(trans(n.Results))
+			o.AddChildren(t.trans(n.Results))
 		}
 
 	case *ast.GenDecl:
 		o.Type = GenDecl
 		for _, spec := range n.Specs {
-			o.AddChildren(trans(spec))
+			o.AddChildren(t.trans(spec))
 		}
 
 	case *ast.GoStmt:
 		o.Type = GoStmt
-		o.AddChildren(trans(n.Call))
+		o.AddChildren(t.trans(n.Call))
 
 	case *ast.Ident:
 		o.Type = Ident
@@ -244,132 +250,132 @@ func trans(node ast.Node) (o *syntax.Node) {
 	case *ast.IfStmt:
 		o.Type = IfStmt
 		if n.Init != nil {
-			o.AddChildren(trans(n.Init))
+			o.AddChildren(t.trans(n.Init))
 		}
-		o.AddChildren(trans(n.Cond), trans(n.Body))
+		o.AddChildren(t.trans(n.Cond), t.trans(n.Body))
 		if n.Else != nil {
-			o.AddChildren(trans(n.Else))
+			o.AddChildren(t.trans(n.Else))
 		}
 
 	case *ast.IncDecStmt:
 		o.Type = IncDecStmt
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 
 	case *ast.IndexExpr:
 		o.Type = IndexExpr
-		o.AddChildren(trans(n.X), trans(n.Index))
+		o.AddChildren(t.trans(n.X), t.trans(n.Index))
 
 	case *ast.InterfaceType:
 		o.Type = InterfaceType
-		o.AddChildren(trans(n.Methods))
+		o.AddChildren(t.trans(n.Methods))
 
 	case *ast.KeyValueExpr:
 		o.Type = KeyValueExpr
-		o.AddChildren(trans(n.Key), trans(n.Value))
+		o.AddChildren(t.trans(n.Key), t.trans(n.Value))
 
 	case *ast.LabeledStmt:
 		o.Type = LabeledStmt
-		o.AddChildren(trans(n.Label), trans(n.Stmt))
+		o.AddChildren(t.trans(n.Label), t.trans(n.Stmt))
 
 	case *ast.MapType:
 		o.Type = MapType
-		o.AddChildren(trans(n.Key), trans(n.Value))
+		o.AddChildren(t.trans(n.Key), t.trans(n.Value))
 
 	case *ast.ParenExpr:
 		o.Type = ParenExpr
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 
 	case *ast.RangeStmt:
 		o.Type = RangeStmt
 		if n.Key != nil {
-			o.AddChildren(trans(n.Key))
+			o.AddChildren(t.trans(n.Key))
 		}
 		if n.Value != nil {
-			o.AddChildren(trans(n.Value))
+			o.AddChildren(t.trans(n.Value))
 		}
-		o.AddChildren(trans(n.X), trans(n.Body))
+		o.AddChildren(t.trans(n.X), t.trans(n.Body))
 
 	case *ast.ReturnStmt:
 		o.Type = ReturnStmt
 		for _, e := range n.Results {
-			o.AddChildren(trans(e))
+			o.AddChildren(t.trans(e))
 		}
 
 	case *ast.SelectStmt:
 		o.Type = SelectStmt
-		o.AddChildren(trans(n.Body))
+		o.AddChildren(t.trans(n.Body))
 
 	case *ast.SelectorExpr:
 		o.Type = SelectorExpr
-		o.AddChildren(trans(n.X), trans(n.Sel))
+		o.AddChildren(t.trans(n.X), t.trans(n.Sel))
 
 	case *ast.SendStmt:
 		o.Type = SendStmt
-		o.AddChildren(trans(n.Chan), trans(n.Value))
+		o.AddChildren(t.trans(n.Chan), t.trans(n.Value))
 
 	case *ast.SliceExpr:
 		o.Type = SliceExpr
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 		if n.Low != nil {
-			o.AddChildren(trans(n.Low))
+			o.AddChildren(t.trans(n.Low))
 		}
 		if n.High != nil {
-			o.AddChildren(trans(n.High))
+			o.AddChildren(t.trans(n.High))
 		}
 		if n.Max != nil {
-			o.AddChildren(trans(n.Max))
+			o.AddChildren(t.trans(n.Max))
 		}
 
 	case *ast.StarExpr:
 		o.Type = StarExpr
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 
 	case *ast.StructType:
 		o.Type = StructType
-		o.AddChildren(trans(n.Fields))
+		o.AddChildren(t.trans(n.Fields))
 
 	case *ast.SwitchStmt:
 		o.Type = SwitchStmt
 		if n.Init != nil {
-			o.AddChildren(trans(n.Init))
+			o.AddChildren(t.trans(n.Init))
 		}
 		if n.Tag != nil {
-			o.AddChildren(trans(n.Tag))
+			o.AddChildren(t.trans(n.Tag))
 		}
-		o.AddChildren(trans(n.Body))
+		o.AddChildren(t.trans(n.Body))
 
 	case *ast.TypeAssertExpr:
 		o.Type = TypeAssertExpr
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 		if n.Type != nil {
-			o.AddChildren(trans(n.Type))
+			o.AddChildren(t.trans(n.Type))
 		}
 
 	case *ast.TypeSpec:
 		o.Type = TypeSpec
-		o.AddChildren(trans(n.Name), trans(n.Type))
+		o.AddChildren(t.trans(n.Name), t.trans(n.Type))
 
 	case *ast.TypeSwitchStmt:
 		o.Type = TypeSwitchStmt
 		if n.Init != nil {
-			o.AddChildren(trans(n.Init))
+			o.AddChildren(t.trans(n.Init))
 		}
-		o.AddChildren(trans(n.Assign), trans(n.Body))
+		o.AddChildren(t.trans(n.Assign), t.trans(n.Body))
 
 	case *ast.UnaryExpr:
 		o.Type = UnaryExpr
-		o.AddChildren(trans(n.X))
+		o.AddChildren(t.trans(n.X))
 
 	case *ast.ValueSpec:
 		o.Type = ValueSpec
 		for _, name := range n.Names {
-			o.AddChildren(trans(name))
+			o.AddChildren(t.trans(name))
 		}
 		if n.Type != nil {
-			o.AddChildren(trans(n.Type))
+			o.AddChildren(t.trans(n.Type))
 		}
 		for _, val := range n.Values {
-			o.AddChildren(trans(val))
+			o.AddChildren(t.trans(val))
 		}
 
 	default:
