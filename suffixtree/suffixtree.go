@@ -130,6 +130,13 @@ func (t *STree) canonize(s *state, start, end pos) (*state, pos) {
 	return s, start
 }
 
+func (t *STree) At(p pos) Token {
+	if p < 0 || p >= pos(len(t.data)) {
+		panic("position out of bounds")
+	}
+	return t.data[p]
+}
+
 func (t *STree) String() string {
 	buf := new(bytes.Buffer)
 	printState(buf, t.root, 0)

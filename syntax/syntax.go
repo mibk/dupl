@@ -1,11 +1,9 @@
 package syntax
 
-import "go/token"
-
 type Node struct {
 	Type     int
 	Filename string
-	Pos, End token.Pos
+	Pos, End int
 	Children []*Node
 	Owns     int
 }
@@ -16,6 +14,10 @@ func NewNode() *Node {
 
 func (n *Node) AddChildren(children ...*Node) {
 	n.Children = append(n.Children, children...)
+}
+
+func (n *Node) Val() int {
+	return n.Type
 }
 
 func Serialize(n *Node) []*Node {

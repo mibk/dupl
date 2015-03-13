@@ -2,7 +2,7 @@ package suffixtree
 
 type Match struct {
 	P1, P2 pos
-	Len    int
+	Len    pos
 }
 
 type clist struct {
@@ -38,7 +38,7 @@ func (c *clist) combine(c2 *clist, length, threshold int, ch chan<- Match) {
 			if lc1 != lc2 {
 				for _, p1 := range pl1.positions {
 					for _, p2 := range pl2.positions {
-						ch <- Match{p1, p2, length}
+						ch <- Match{p1, p2, pos(length)}
 					}
 				}
 			}

@@ -67,11 +67,15 @@ func Parse(filename string) (*syntax.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := &transformer{filename}
+	t := &transformer{
+		fileset:  fset,
+		filename: filename,
+	}
 	return t.trans(file), nil
 }
 
 type transformer struct {
+	fileset  *token.FileSet
 	filename string
 }
 
@@ -79,7 +83,8 @@ type transformer struct {
 func (t *transformer) trans(node ast.Node) (o *syntax.Node) {
 	o = syntax.NewNode()
 	o.Filename = t.filename
-	o.Pos, o.End = node.Pos(), node.End()
+	st, end := node.Pos(), node.End()
+	o.Pos, o.End = t.fileset.File(st).Offset(st), t.fileset.File(end).Offset(end)
 
 	switch n := node.(type) {
 	case *ast.ArrayType:
