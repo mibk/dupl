@@ -6,11 +6,11 @@ type Match struct {
 }
 
 type clist struct {
-	lists map[byte]*plist
+	lists map[int]*plist
 }
 
 func newClist() *clist {
-	return &clist{make(map[byte]*plist)}
+	return &clist{make(map[int]*plist)}
 }
 
 type plist struct {
@@ -78,9 +78,9 @@ func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *clist {
 		pl := newPlist()
 		start := parent.end + 1 - pos(length)
 		pl.add(start)
-		ch := byte('#')
+		ch := 0
 		if start > 0 {
-			ch = s.t.data[start-1]
+			ch = s.t.data[start-1].Val()
 		}
 		cl.lists[ch] = pl
 		return cl

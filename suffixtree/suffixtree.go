@@ -12,9 +12,13 @@ const infinity = math.MaxInt32
 // pos denotes position in data string.
 type pos int32
 
+type Token interface {
+	Val() int
+}
+
 // STree is a struct representing a suffix tree.
 type STree struct {
-	data     string
+	data     []Token
 	root     *state
 	auxState *state // auxiliary state
 
@@ -26,6 +30,7 @@ type STree struct {
 // New creates new suffix tree.
 func New() *STree {
 	t := new(STree)
+	t.data = make([]Token, 0, 50)
 	t.root = newState(t)
 	t.auxState = newState(t)
 	t.root.linkState = t.auxState
@@ -34,8 +39,8 @@ func New() *STree {
 }
 
 // Update refreshes the suffix tree to by new data.
-func (t *STree) Update(data string) {
-	t.data += data
+func (t *STree) Update(data ...Token) {
+	t.data = append(t.data, data...)
 	for _ = range data {
 		t.update()
 		t.s, t.start = t.canonize(t.s, t.start, t.end)
@@ -76,9 +81,9 @@ func (t *STree) update() {
 func (t *STree) testAndSplit(s *state, start, end pos) (exs *state, endPoint bool) {
 	c := t.data[t.end]
 	if start <= end {
-		tr := s.findTran(s.t.data[start])
+		tr := s.findTran(t.data[start])
 		splitPoint := tr.start + end - start + 1
-		if s.t.data[splitPoint] == c {
+		if t.data[splitPoint].Val() == c.Val() {
 			return s, true
 		}
 		// make the (s, (start, end)) state explicit
@@ -108,9 +113,9 @@ func (t *STree) canonize(s *state, start, end pos) (*state, pos) {
 	var tr *tran
 	for {
 		if start <= end {
-			tr = s.findTran(s.t.data[start])
+			tr = s.findTran(t.data[start])
 			if tr == nil {
-				panic(fmt.Sprintf("there should be some transition for '%c' at %d", s.t.data[start], start))
+				panic(fmt.Sprintf("there should be some transition for '%d' at %d", t.data[start].Val(), start))
 			}
 		}
 		if tr.end-tr.start > end-start {
@@ -134,7 +139,7 @@ func (t *STree) String() string {
 func printState(buf *bytes.Buffer, s *state, ident int) {
 	for _, tr := range s.trans {
 		fmt.Fprint(buf, strings.Repeat("  ", ident))
-		fmt.Fprintf(buf, "* (%d, %d) '%s'\n", tr.start, tr.ActEnd(), s.t.data[tr.start:tr.ActEnd()+1])
+		fmt.Fprintf(buf, "* (%d, %d)\n", tr.start, tr.ActEnd())
 		printState(buf, tr.state, ident+1)
 	}
 }
@@ -166,9 +171,9 @@ func (s *state) fork(i pos) *state {
 }
 
 // findTran finds c-transition.
-func (s *state) findTran(c byte) *tran {
+func (s *state) findTran(c Token) *tran {
 	for _, tran := range s.trans {
-		if s.t.data[tran.start] == c {
+		if s.t.data[tran.start].Val() == c.Val() {
 			return tran
 		}
 	}

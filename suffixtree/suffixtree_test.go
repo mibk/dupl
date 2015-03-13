@@ -2,6 +2,20 @@ package suffixtree
 
 import "testing"
 
+type char byte
+
+func (c char) Val() int {
+	return int(c)
+}
+
+func str2tok(str string) []Token {
+	toks := make([]Token, len(str))
+	for i, c := range str {
+		toks[i] = char(c)
+	}
+	return toks
+}
+
 func TestConstruction(t *testing.T) {
 	str := "cacao"
 	_, s := genStates(8, str)
@@ -17,7 +31,7 @@ func TestConstruction(t *testing.T) {
 	s[2].addTran(4, 4, s[5]) // o
 
 	cacao := New()
-	cacao.Update(str)
+	cacao.Update(str2tok(str)...)
 	compareTrees(t, s[0], cacao.root)
 
 	str2 := "banana"
@@ -27,7 +41,7 @@ func TestConstruction(t *testing.T) {
 	r[0].addTran(2, 5, r[3]) // nana
 
 	banana := New()
-	banana.Update(str2)
+	banana.Update(str2tok(str2)...)
 	compareTrees(t, r[0], banana.root)
 
 	_, q := genStates(11, str2+"$")
@@ -46,11 +60,11 @@ func TestConstruction(t *testing.T) {
 	q[5].addTran(4, 6, q[9])  // na$
 	q[5].addTran(6, 6, q[10]) // $
 
-	banana.Update("$")
+	banana.Update(char('$'))
 	compareTrees(t, q[0], banana.root)
 
 	foo := New()
-	foo.Update("a b ac c ")
+	foo.Update(str2tok("a b ac c ")...)
 }
 
 func compareTrees(t *testing.T, expected, actual *state) {
@@ -93,7 +107,7 @@ func walk(s *state, ch chan<- *tran) {
 
 func genStates(count int, data string) (*STree, []*state) {
 	t := new(STree)
-	t.data = data
+	t.data = str2tok(data)
 	states := make([]*state, count)
 	for i := range states {
 		states[i] = newState(t)
@@ -148,7 +162,7 @@ func TestCanonize(t *testing.T) {
 
 func TestSplitting(t *testing.T) {
 	tree := new(STree)
-	tree.data = "banana|cbao"
+	tree.data = str2tok("banana|cbao")
 	s1 := newState(tree)
 	s2 := newState(tree)
 	s1.addTran(0, 3, s2)
@@ -181,13 +195,13 @@ func TestSplitting(t *testing.T) {
 	// [s1]-banana->[s2] => [s1]-ban->[rets]-ana->[s2]
 	tree.end = 10 // o
 	rets, end = tree.testAndSplit(s1, 0, 2)
-	tr := s1.findTran('b')
+	tr := s1.findTran(char('b'))
 	if tr == nil {
 		t.Error("should have a b-transition")
 	} else if tr.state != rets {
 		t.Errorf("got state %p, want %p", tr.state, rets)
 	}
-	tr2 := rets.findTran('a')
+	tr2 := rets.findTran(char('a'))
 	if tr2 == nil {
 		t.Error("should have an a-transition")
 	} else if tr2.state != s2 {
@@ -206,10 +220,12 @@ func TestPosMaxValue(t *testing.T) {
 }
 
 func BenchmarkConstruction(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		t := New()
-		t.Update(`all work and no play makes jack a dull boy
+	stream := str2tok(`all work and no play makes jack a dull boy
 all work and no play makes jack a dull boy
 all work and no play makes jack a dull boy`)
+
+	for i := 0; i < b.N; i++ {
+		t := New()
+		t.Update(stream...)
 	}
 }

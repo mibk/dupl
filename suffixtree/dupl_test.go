@@ -25,7 +25,7 @@ All work and no play makes Jack a dull boy$`, 4, []Match{{0, 43, 42}}},
 
 	for _, tc := range testCases {
 		tree := New()
-		tree.Update(tc.s)
+		tree.Update(str2tok(tc.s)...)
 		ch := tree.FindDuplOver(tc.threshold)
 		for _, exp := range tc.matches {
 			act, ok := <-ch
