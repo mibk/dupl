@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -19,10 +20,21 @@ func (c char) Val() int {
 	return int(c)
 }
 
+var (
+	dir       = "."
+	threshold = flag.Int("t", 15, "minimum token sequence as a clone")
+)
+
 func main() {
+	flag.Parse()
+	args := flag.Args()
+	if len(args) > 0 {
+		dir = args[0]
+	}
+
 	fchan := make(chan string)
 	go func() {
-		filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
 				fchan <- path
 			}
@@ -54,7 +66,7 @@ func main() {
 
 	printer := text.NewPrinter(os.Stdout)
 
-	mchan := t.FindDuplOver(15)
+	mchan := t.FindDuplOver(*threshold)
 	cnt := 0
 	for {
 		m, ok := <-mchan
