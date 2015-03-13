@@ -9,8 +9,8 @@ import (
 
 const infinity = math.MaxInt32
 
-// pos denotes position in data string.
-type pos int32
+// Pos denotes position in data slice.
+type Pos int32
 
 type Token interface {
 	Val() int
@@ -24,7 +24,7 @@ type STree struct {
 
 	// active point
 	s          *state
-	start, end pos
+	start, end Pos
 }
 
 // New creates new suffix tree.
@@ -78,7 +78,7 @@ func (t *STree) update() {
 // (s, (start, end)) is the end point, that is, a state that have
 // a c-transition. If not, then state (exs, (start, end)) is made
 // explicit (if not already so).
-func (t *STree) testAndSplit(s *state, start, end pos) (exs *state, endPoint bool) {
+func (t *STree) testAndSplit(s *state, start, end Pos) (exs *state, endPoint bool) {
 	c := t.data[t.end]
 	if start <= end {
 		tr := s.findTran(t.data[start])
@@ -102,7 +102,7 @@ func (t *STree) testAndSplit(s *state, start, end pos) (exs *state, endPoint boo
 // canonize returns updated state and start position for ref. pair
 // (s, (start, end)) of state r so the new ref. pair is canonical,
 // that is, referenced from the closest explicit ancestor of r.
-func (t *STree) canonize(s *state, start, end pos) (*state, pos) {
+func (t *STree) canonize(s *state, start, end Pos) (*state, Pos) {
 	if s == t.auxState {
 		s, start = t.root, start+1
 	}
@@ -130,8 +130,8 @@ func (t *STree) canonize(s *state, start, end pos) (*state, pos) {
 	return s, start
 }
 
-func (t *STree) At(p pos) Token {
-	if p < 0 || p >= pos(len(t.data)) {
+func (t *STree) At(p Pos) Token {
+	if p < 0 || p >= Pos(len(t.data)) {
 		panic("position out of bounds")
 	}
 	return t.data[p]
@@ -166,12 +166,12 @@ func newState(t *STree) *state {
 	}
 }
 
-func (s *state) addTran(start, end pos, r *state) {
+func (s *state) addTran(start, end Pos, r *state) {
 	s.trans = append(s.trans, newTran(start, end, r))
 }
 
 // fork creates a new branch from the state s.
-func (s *state) fork(i pos) *state {
+func (s *state) fork(i Pos) *state {
 	r := newState(s.t)
 	s.addTran(i, infinity, r)
 	return r
@@ -189,11 +189,11 @@ func (s *state) findTran(c Token) *tran {
 
 // tran represents a state's transition.
 type tran struct {
-	start, end pos
+	start, end Pos
 	state      *state
 }
 
-func newTran(start, end pos, s *state) *tran {
+func newTran(start, end Pos, s *state) *tran {
 	return &tran{start, end, s}
 }
 
@@ -203,9 +203,9 @@ func (t *tran) len() int {
 
 // ActEnd returns actual end position as consistent with
 // the actual length of the data in the STree.
-func (t *tran) ActEnd() pos {
+func (t *tran) ActEnd() Pos {
 	if t.end == infinity {
-		return pos(len(t.state.t.data)) - 1
+		return Pos(len(t.state.t.data)) - 1
 	}
 	return t.end
 }

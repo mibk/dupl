@@ -1,8 +1,8 @@
 package suffixtree
 
 type Match struct {
-	P1, P2 pos
-	Len    pos
+	P1, P2 Pos
+	Len    Pos
 }
 
 type clist struct {
@@ -14,18 +14,18 @@ func newClist() *clist {
 }
 
 type plist struct {
-	positions []pos
+	positions []Pos
 }
 
 func newPlist() *plist {
-	return &plist{make([]pos, 0)}
+	return &plist{make([]Pos, 0)}
 }
 
 func (p *plist) append(p2 *plist) {
 	p.positions = append(p.positions, p2.positions...)
 }
 
-func (p *plist) add(pos pos) {
+func (p *plist) add(pos Pos) {
 	p.positions = append(p.positions, pos)
 }
 
@@ -38,7 +38,7 @@ func (c *clist) combine(c2 *clist, length, threshold int, ch chan<- Match) {
 			if lc1 != lc2 {
 				for _, p1 := range pl1.positions {
 					for _, p2 := range pl2.positions {
-						ch <- Match{p1, p2, pos(length)}
+						ch <- Match{p1, p2, Pos(length)}
 					}
 				}
 			}
@@ -76,7 +76,7 @@ func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *clist {
 
 	if len(s.trans) == 0 {
 		pl := newPlist()
-		start := parent.end + 1 - pos(length)
+		start := parent.end + 1 - Pos(length)
 		pl.add(start)
 		ch := 0
 		if start > 0 {

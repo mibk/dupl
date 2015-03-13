@@ -32,7 +32,6 @@ func main() {
 	}()
 
 	t := suffixtree.New()
-	printer := text.NewPrinter(os.Stdout, t)
 
 	for {
 		file, ok := <-fchan
@@ -53,14 +52,17 @@ func main() {
 	// finish stream
 	t.Update(char(-1))
 
-	mchan := t.FindDuplOver(25)
+	printer := text.NewPrinter(os.Stdout)
+
+	mchan := t.FindDuplOver(15)
 	cnt := 0
 	for {
 		m, ok := <-mchan
 		if !ok {
 			break
 		}
-		printer.Print(m)
+		dup1, dup2 := syntax.FindSyntaxUnits(t, m)
+		printer.Print(dup1, dup2)
 		cnt++
 	}
 	fmt.Printf("\nFound total %d clones.\n", cnt)

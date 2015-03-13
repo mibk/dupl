@@ -117,7 +117,7 @@ func genStates(count int, data string) (*STree, []*state) {
 
 type refPair struct {
 	s          *state
-	start, end pos
+	start, end Pos
 }
 
 func TestCanonize(t *testing.T) {
@@ -213,7 +213,7 @@ func TestSplitting(t *testing.T) {
 }
 
 func TestPosMaxValue(t *testing.T) {
-	var p pos = infinity
+	var p Pos = infinity
 	if p+1 > 0 {
 		t.Error("const infinity is not max value")
 	}
