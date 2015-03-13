@@ -32,6 +32,7 @@ func main() {
 		dir = args[0]
 	}
 
+	// collecting files
 	fchan := make(chan string)
 	go func() {
 		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -43,20 +44,46 @@ func main() {
 		close(fchan)
 	}()
 
-	t := suffixtree.New()
+	// AST parsing
+	achan := make(chan *syntax.Node)
+	go func() {
+		for {
+			file, ok := <-fchan
+			if !ok {
+				break
+			}
+			ast, err := golang.Parse(file)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			achan <- ast
+		}
+		close(achan)
+	}()
 
+	// serialization
+	schan := make(chan []*syntax.Node)
+	go func() {
+		for {
+			ast, ok := <-achan
+			if !ok {
+				break
+			}
+			seq := syntax.Serialize(ast)
+			schan <- seq
+		}
+		close(schan)
+	}()
+
+	// suffix tree
+	t := suffixtree.New()
 	for {
-		file, ok := <-fchan
+		seq, ok := <-schan
 		if !ok {
 			break
 		}
-		syn, err := golang.Parse(file)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		stream := syntax.Serialize(syn)
-		for _, item := range stream {
+		for _, item := range seq {
 			t.Update(item)
 		}
 	}
@@ -64,8 +91,8 @@ func main() {
 	// finish stream
 	t.Update(char(-1))
 
+	// printing the clones
 	printer := text.NewPrinter(os.Stdout)
-
 	mchan := t.FindDuplOver(*threshold)
 	cnt := 0
 	for {
