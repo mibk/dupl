@@ -55,15 +55,19 @@ func (t *STree) update() {
 	// (s, (start, end)) is the canonical reference pair for the active point
 	s := t.s
 	start, end := t.start, t.end
-	r, endPoint := t.testAndSplit(s, start, end-1)
-	for !endPoint {
+	var r *state
+	for {
+		var endPoint bool
+		r, endPoint = t.testAndSplit(s, start, end-1)
+		if endPoint {
+			break
+		}
 		r.fork(end)
 		if oldr != t.root {
 			oldr.linkState = r
 		}
 		oldr = r
 		s, start = t.canonize(s.linkState, start, end-1)
-		r, endPoint = t.testAndSplit(s, start, end-1)
 	}
 	if oldr != t.root {
 		oldr.linkState = r
