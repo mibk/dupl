@@ -1,16 +1,8 @@
 package suffixtree
 
 type Match struct {
-	P1, P2 Pos
-	Len    Pos
-}
-
-type contextList struct {
-	lists map[int]*posList
-}
-
-func newContextList() *contextList {
-	return &contextList{make(map[int]*posList)}
+	Ps  []Pos
+	Len Pos
 }
 
 type posList struct {
@@ -29,22 +21,20 @@ func (p *posList) add(pos Pos) {
 	p.positions = append(p.positions, pos)
 }
 
-func (c *contextList) combine(c2 *contextList, length, threshold int, ch chan<- Match) {
-	if length < threshold {
-		return
+type contextList struct {
+	lists map[int]*posList
+}
+
+func newContextList() *contextList {
+	return &contextList{make(map[int]*posList)}
+}
+
+func (c *contextList) getAll() []Pos {
+	ps := make([]Pos, 0)
+	for _, pl := range c.lists {
+		ps = append(ps, pl.positions...)
 	}
-	for lc1, pl1 := range c.lists {
-		for lc2, pl2 := range c2.lists {
-			if lc1 != lc2 {
-				for _, p1 := range pl1.positions {
-					for _, p2 := range pl2.positions {
-						ch <- Match{p1, p2, Pos(length)}
-					}
-				}
-			}
-		}
-	}
-	c.append(c2)
+	return ps
 }
 
 func (c *contextList) append(c2 *contextList) {
@@ -87,7 +77,15 @@ func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *contextLis
 	}
 
 	for _, t := range s.trans {
-		cl.combine(walkTrans(t, length+t.len(), threshold, ch), length, threshold, ch)
+		ln := length + t.len()
+		cl2 := walkTrans(t, ln, threshold, ch)
+		if ln >= threshold {
+			cl.append(cl2)
+		}
+	}
+	if length >= threshold && len(cl.lists) > 1 {
+		m := Match{cl.getAll(), Pos(length)}
+		ch <- m
 	}
 	return cl
 }

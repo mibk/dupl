@@ -43,30 +43,27 @@ func serial(n *Node, stream *[]*Node) int {
 }
 
 // FindSyntaxUnits finds all complete syntax units in the match pair and returns them.
-func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match) ([]*Node, []*Node) {
+func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match) [][]*Node {
 	i := 0
-	list1 := make([]*Node, 0)
-	list2 := make([]*Node, 0)
+	indexes := make([]suffixtree.Pos, 0)
 	for i < int(m.Len) {
-		n1 := getNode(stree.At(m.P1 + suffixtree.Pos(i)))
-		n2 := getNode(stree.At(m.P2 + suffixtree.Pos(i)))
-		if n1.Owns == n2.Owns {
-			if n1.Owns >= int(m.Len)-i {
-				// not complete syntax unit
-				i++
-				continue
-			}
-			list1 = append(list1, n1)
-			list2 = append(list2, n2)
-			i += n1.Owns + 1
-
-		} else if n1.Owns > n2.Owns {
-			i += n1.Owns
-		} else {
-			i += n2.Owns
+		n := getNode(stree.At(m.Ps[0] + suffixtree.Pos(i)))
+		if n.Owns >= int(m.Len)-i {
+			// not complete syntax unit
+			i++
+			continue
+		}
+		indexes = append(indexes, suffixtree.Pos(i))
+		i += n.Owns + 1
+	}
+	res := make([][]*Node, len(m.Ps))
+	for i, pos := range m.Ps {
+		res[i] = make([]*Node, len(indexes))
+		for j, index := range indexes {
+			res[i][j] = getNode(stree.At(pos + index))
 		}
 	}
-	return list1, list2
+	return res
 }
 
 func getNode(tok suffixtree.Token) *Node {

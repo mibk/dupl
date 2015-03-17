@@ -100,8 +100,8 @@ func main() {
 		if !ok {
 			break
 		}
-		dup1, dup2 := syntax.FindSyntaxUnits(t, m)
-		printer.Print(dup1, dup2)
+		dups := syntax.FindSyntaxUnits(t, m)
+		printer.Print(dups)
 		cnt++
 	}
 	fmt.Printf("\nFound total %d clones.\n", cnt)

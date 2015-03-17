@@ -18,35 +18,25 @@ func NewPrinter(w io.Writer) *Printer {
 	}
 }
 
-func (p *Printer) Print(dup1, dup2 []*syntax.Node) {
-	if len(dup1) == 0 || len(dup2) == 0 {
-		return
-	}
+func (p *Printer) Print(dups [][]*syntax.Node) {
 
-	nstart1 := dup1[0]
-	nend1 := dup1[len(dup1)-1]
-	nstart2 := dup2[0]
-	nend2 := dup2[len(dup2)-1]
+	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
+	for i, dup := range dups {
+		if len(dup) == 0 {
+			continue
+		}
+		nstart := dup[0]
+		nend := dup[len(dup)-1]
 
-	// TODO: Duplication could possibly be over several files.
-	file1, err := ioutil.ReadFile(nstart1.Filename)
-	if err != nil {
-		panic(err)
-	}
-	file2 := file1
-	if nstart1.Filename == nstart2.Filename {
-		file2, err = ioutil.ReadFile(nstart2.Filename)
+		// TODO: Duplication could possibly be over several files.
+		file, err := ioutil.ReadFile(nstart.Filename)
 		if err != nil {
 			panic(err)
 		}
+
+		lstart, lend := blockLines(file, nstart.Pos, nend.End)
+		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, nstart.Filename, lstart, lend)
 	}
-
-	lstart1, lend1 := blockLines(file1, nstart1.Pos, nend1.End)
-	lstart2, lend2 := blockLines(file2, nstart2.Pos, nend2.End)
-
-	fmt.Fprintf(p.writer, "found clone spanning %d lines:\n", lend1-lstart1+1)
-	fmt.Fprintf(p.writer, "  loc 1: %s, line %d-%d,\n  loc 2: %s, line %d-%d.\n",
-		nstart1.Filename, lstart1, lend1, nstart2.Filename, lstart2, lend2)
 }
 
 func blockLines(file []byte, from, to int) (int, int) {
