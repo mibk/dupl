@@ -5,31 +5,31 @@ type Match struct {
 	Len    Pos
 }
 
-type clist struct {
-	lists map[int]*plist
+type contextList struct {
+	lists map[int]*posList
 }
 
-func newClist() *clist {
-	return &clist{make(map[int]*plist)}
+func newContextList() *contextList {
+	return &contextList{make(map[int]*posList)}
 }
 
-type plist struct {
+type posList struct {
 	positions []Pos
 }
 
-func newPlist() *plist {
-	return &plist{make([]Pos, 0)}
+func newPosList() *posList {
+	return &posList{make([]Pos, 0)}
 }
 
-func (p *plist) append(p2 *plist) {
+func (p *posList) append(p2 *posList) {
 	p.positions = append(p.positions, p2.positions...)
 }
 
-func (p *plist) add(pos Pos) {
+func (p *posList) add(pos Pos) {
 	p.positions = append(p.positions, pos)
 }
 
-func (c *clist) combine(c2 *clist, length, threshold int, ch chan<- Match) {
+func (c *contextList) combine(c2 *contextList, length, threshold int, ch chan<- Match) {
 	if length < threshold {
 		return
 	}
@@ -47,7 +47,7 @@ func (c *clist) combine(c2 *clist, length, threshold int, ch chan<- Match) {
 	c.append(c2)
 }
 
-func (c *clist) append(c2 *clist) {
+func (c *contextList) append(c2 *contextList) {
 	for lc, pl := range c2.lists {
 		if _, ok := c.lists[lc]; ok {
 			c.lists[lc].append(pl)
@@ -69,13 +69,13 @@ func (t *STree) FindDuplOver(threshold int) <-chan Match {
 	return ch
 }
 
-func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *clist {
+func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *contextList {
 	s := parent.state
 
-	cl := newClist()
+	cl := newContextList()
 
 	if len(s.trans) == 0 {
-		pl := newPlist()
+		pl := newPosList()
 		start := parent.end + 1 - Pos(length)
 		pl.add(start)
 		ch := 0
