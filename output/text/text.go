@@ -23,7 +23,7 @@ func (p *Printer) Print(dups [][]*syntax.Node) {
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
 	for i, dup := range dups {
 		if len(dup) == 0 {
-			continue
+			panic("zero length dup")
 		}
 		nstart := dup[0]
 		nend := dup[len(dup)-1]

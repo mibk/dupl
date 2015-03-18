@@ -43,7 +43,7 @@ func serial(n *Node, stream *[]*Node) int {
 }
 
 // FindSyntaxUnits finds all complete syntax units in the match pair and returns them.
-func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match) [][]*Node {
+func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int) [][]*Node {
 	i := 0
 	indexes := make([]suffixtree.Pos, 0)
 	for i < int(m.Len) {
@@ -52,9 +52,13 @@ func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match) [][]*Node {
 			// not complete syntax unit
 			i++
 			continue
+		} else if n.Owns >= threshold {
+			indexes = append(indexes, suffixtree.Pos(i))
 		}
-		indexes = append(indexes, suffixtree.Pos(i))
 		i += n.Owns + 1
+	}
+	if len(indexes) == 0 {
+		return make([][]*Node, 0)
 	}
 	res := make([][]*Node, len(m.Ps))
 	for i, pos := range m.Ps {

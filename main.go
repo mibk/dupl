@@ -100,9 +100,10 @@ func main() {
 		if !ok {
 			break
 		}
-		dups := syntax.FindSyntaxUnits(t, m)
-		printer.Print(dups)
-		cnt++
+		if dups := syntax.FindSyntaxUnits(t, m, *threshold); len(dups) != 0 {
+			printer.Print(dups)
+			cnt++
+		}
 	}
-	fmt.Printf("\nFound total %d clones.\n", cnt)
+	fmt.Printf("\nFound total %d clone groups.\n", cnt)
 }
