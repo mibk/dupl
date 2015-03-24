@@ -81,14 +81,14 @@ func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int)
 	if len(indexes) == 0 {
 		return make([]*Seq, 0)
 	}
-	groups := make([]*Seq, len(m.Ps))
+	seqs := make([]*Seq, len(m.Ps))
 	for i, pos := range m.Ps {
-		groups[i] = newSeq(len(indexes))
+		seqs[i] = newSeq(len(indexes))
 		for j, index := range indexes {
-			groups[i].Nodes[j] = getNode(stree.At(pos + index))
+			seqs[i].Nodes[j] = getNode(stree.At(pos + index))
 		}
 	}
-	return groups
+	return seqs
 }
 
 func getNode(tok suffixtree.Token) *Node {
