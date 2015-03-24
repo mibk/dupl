@@ -65,6 +65,19 @@ func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int)
 		}
 		i += n.Owns + 1
 	}
+
+	indexCnt := len(indexes)
+	if indexCnt > 0 {
+		lasti := indexes[indexCnt-1]
+		firstn := getNode(stree.At(m.Ps[0] + lasti))
+		for i := 1; i < len(m.Ps); i++ {
+			n := getNode(stree.At(m.Ps[i] + lasti))
+			if firstn.Owns != n.Owns {
+				indexes = indexes[:indexCnt-1]
+				break
+			}
+		}
+	}
 	if len(indexes) == 0 {
 		return make([]*Seq, 0)
 	}
