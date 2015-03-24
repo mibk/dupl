@@ -6,6 +6,14 @@ import (
 	"fm.tul.cz/dupl/suffixtree"
 )
 
+type Seq struct {
+	Nodes []*Node
+}
+
+func newSeq(cnt int) *Seq {
+	return &Seq{make([]*Node, cnt)}
+}
+
 type Node struct {
 	Type     int
 	Filename string
@@ -43,7 +51,7 @@ func serial(n *Node, stream *[]*Node) int {
 }
 
 // FindSyntaxUnits finds all complete syntax units in the match pair and returns them.
-func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int) [][]*Node {
+func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int) []*Seq {
 	i := 0
 	indexes := make([]suffixtree.Pos, 0)
 	for i < int(m.Len) {
@@ -58,16 +66,16 @@ func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int)
 		i += n.Owns + 1
 	}
 	if len(indexes) == 0 {
-		return make([][]*Node, 0)
+		return make([]*Seq, 0)
 	}
-	res := make([][]*Node, len(m.Ps))
+	groups := make([]*Seq, len(m.Ps))
 	for i, pos := range m.Ps {
-		res[i] = make([]*Node, len(indexes))
+		groups[i] = newSeq(len(indexes))
 		for j, index := range indexes {
-			res[i][j] = getNode(stree.At(pos + index))
+			groups[i].Nodes[j] = getNode(stree.At(pos + index))
 		}
 	}
-	return res
+	return groups
 }
 
 func getNode(tok suffixtree.Token) *Node {

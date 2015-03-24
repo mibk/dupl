@@ -18,17 +18,16 @@ func NewPrinter(w io.Writer) *Printer {
 	}
 }
 
-func (p *Printer) Print(dups [][]*syntax.Node) {
-
+func (p *Printer) Print(dups []*syntax.Seq) {
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
 	for i, dup := range dups {
-		if len(dup) == 0 {
+		cnt := len(dup.Nodes)
+		if cnt == 0 {
 			panic("zero length dup")
 		}
-		nstart := dup[0]
-		nend := dup[len(dup)-1]
+		nstart := dup.Nodes[0]
+		nend := dup.Nodes[cnt-1]
 
-		// TODO: Duplication could possibly be over several files.
 		file, err := ioutil.ReadFile(nstart.Filename)
 		if err != nil {
 			panic(err)
