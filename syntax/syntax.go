@@ -94,20 +94,23 @@ func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int)
 // isCyclic finds out whether there is a repetive pattern in the found clone. If positive,
 // it return false to point out that the clone would be redundant.
 func isCyclic(stree *suffixtree.STree, indexes []suffixtree.Pos, startPos suffixtree.Pos) bool {
-	if len(indexes) <= 1 {
+	cnt := len(indexes)
+	if cnt <= 1 {
 		return false
 	}
-	alts := make(map[suffixtree.Pos]bool)
-	for i := 1; i <= len(indexes)/2; i++ {
-		alts[indexes[i]] = true
+	alts := make(map[int]bool)
+	for i := 1; i <= cnt/2; i++ {
+		alts[i] = true
 	}
 
-	for i := startPos; i < startPos+indexes[1]; i++ {
+	for i := startPos; i < startPos+indexes[cnt/2]; i++ {
 		nstart := getNode(stree.At(i + indexes[0]))
 		for alt := range alts {
-			nalt := getNode(stree.At(i + alt))
-			if nstart.Owns != nalt.Owns || nstart.Type != nalt.Type {
-				delete(alts, alt)
+			for j := alt; j < cnt; j += alt {
+				nalt := getNode(stree.At(i + indexes[j]))
+				if nstart.Owns != nalt.Owns || nstart.Type != nalt.Type {
+					delete(alts, alt)
+				}
 			}
 		}
 		if len(alts) == 0 {

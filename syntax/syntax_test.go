@@ -52,11 +52,14 @@ func TestCyclicDupl(t *testing.T) {
 		indexes  []suffixtree.Pos
 		expected bool
 	}{
-		{"a1b0a2b0", []suffixtree.Pos{0, 2}, false},
-		{"a1b0a1b0", []suffixtree.Pos{0, 2}, true},
-		{"a0a0", []suffixtree.Pos{0, 1}, true},
-		{"a1b0c1b0a1b0c1b0", []suffixtree.Pos{0, 2, 4, 6}, true},
-		{"a1b0c1b0a1b0", []suffixtree.Pos{0, 2, 4}, false},
+		{"a1 b0 a2 b0", []suffixtree.Pos{0, 2}, false},
+		{"a1 b0 a1 b0", []suffixtree.Pos{0, 2}, true},
+		{"a0 a0", []suffixtree.Pos{0, 1}, true},
+		{"a1 b0 c1 b0 a1 b0 c1 b0", []suffixtree.Pos{0, 2, 4, 6}, true},
+		{"a1 b0 c1 b0 a1 b0", []suffixtree.Pos{0, 2, 4}, false},
+		{"a0 b0 a0 c0", []suffixtree.Pos{0, 1, 2, 3}, false},
+		{"a0 b0 a0 b0 a0", []suffixtree.Pos{0, 1, 2}, false},
+		{"a1 b0 a1 b0 c1 b0", []suffixtree.Pos{0, 2, 4}, false},
 	}
 
 	for _, tc := range testCases {
@@ -65,7 +68,7 @@ func TestCyclicDupl(t *testing.T) {
 			stree.Update(n)
 		}
 		if tc.expected != isCyclic(stree, tc.indexes, suffixtree.Pos(0)) {
-			t.Errorf("for seq %v, indexes %v got %t, want %t", tc.seq, tc.indexes, !tc.expected, tc.expected)
+			t.Errorf("for seq '%s', indexes %v, got %t, want %t", tc.seq, tc.indexes, !tc.expected, tc.expected)
 		}
 	}
 }
@@ -76,9 +79,9 @@ func TestCyclicDupl(t *testing.T) {
 //   - second character is the number for Node.Owns.
 func str2nodes(str string) []*Node {
 	chars := []rune(str)
-	nodes := make([]*Node, len(chars)/2)
-	for i := 0; i < len(chars)-1; i += 2 {
-		nodes[i/2] = &Node{Type: int(chars[i]), Owns: int(chars[i+1] - '0')}
+	nodes := make([]*Node, (len(chars)+1)/3)
+	for i := 0; i < len(chars)-1; i += 3 {
+		nodes[i/3] = &Node{Type: int(chars[i]), Owns: int(chars[i+1] - '0')}
 	}
 	return nodes
 }
