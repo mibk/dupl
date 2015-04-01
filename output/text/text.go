@@ -3,18 +3,23 @@ package text
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"fm.tul.cz/dupl/syntax"
 )
 
-type Printer struct {
-	writer io.Writer
+type FileReader interface {
+	ReadFile(node *syntax.Node) ([]byte, error)
 }
 
-func NewPrinter(w io.Writer) *Printer {
+type Printer struct {
+	writer  io.Writer
+	freader FileReader
+}
+
+func NewPrinter(w io.Writer, fr FileReader) *Printer {
 	return &Printer{
-		writer: w,
+		writer:  w,
+		freader: fr,
 	}
 }
 
@@ -28,13 +33,17 @@ func (p *Printer) Print(dups []*syntax.Seq) {
 		nstart := dup.Nodes[0]
 		nend := dup.Nodes[cnt-1]
 
-		file, err := ioutil.ReadFile(nstart.Filename)
+		file, err := p.freader.ReadFile(nstart)
 		if err != nil {
 			panic(err)
 		}
 
 		lstart, lend := blockLines(file, nstart.Pos, nend.End)
-		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, nstart.Filename, lstart, lend)
+		filename := nstart.Filename
+		if nstart.Addr != "" {
+			filename = nstart.Addr + "@" + filename
+		}
+		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, filename, lstart, lend)
 	}
 }
 

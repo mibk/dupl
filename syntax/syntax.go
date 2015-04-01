@@ -16,6 +16,7 @@ func newSeq(cnt int) *Seq {
 
 type Node struct {
 	Type     int
+	Addr     string
 	Filename string
 	Pos, End int
 	Children []*Node
@@ -98,6 +99,7 @@ func isCyclic(stree *suffixtree.STree, indexes []suffixtree.Pos, startPos suffix
 	if cnt <= 1 {
 		return false
 	}
+
 	alts := make(map[int]bool)
 	for i := 1; i <= cnt/2; i++ {
 		alts[i] = true
