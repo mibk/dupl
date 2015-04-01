@@ -67,12 +67,13 @@ type Scanner struct {
 }
 
 type Response struct {
-	Seq []*syntax.Node
-	Ok  bool
+	Seq  []*syntax.Node
+	Done bool
 }
 
 func (s *Scanner) Next(ignore bool, r *Response) error {
-	r.Seq, r.Ok = <-s.ch
+	seq, ok := <-s.ch
+	r.Seq, r.Done = seq, !ok
 	return nil
 }
 
@@ -151,7 +152,7 @@ func runClient() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !reply.Ok {
+			if reply.Done {
 				delete(tempClients, addr)
 			}
 			bchan <- job.NewBatch(addr, reply.Seq)
