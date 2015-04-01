@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"fm.tul.cz/dupl/job"
-	"fm.tul.cz/dupl/output/text"
+	"fm.tul.cz/dupl/output"
 	"fm.tul.cz/dupl/remote"
 	"fm.tul.cz/dupl/suffixtree"
 	"fm.tul.cz/dupl/syntax"
@@ -18,6 +18,7 @@ var (
 	threshold  = flag.Int("t", 15, "minimum token sequence as a clone")
 	serverPort = flag.String("serve", "", "run server at port")
 	addrs      AddrList
+	html       = flag.Bool("html", false, "html output")
 )
 
 type AddrList []string
@@ -73,19 +74,22 @@ func (r *LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
 	return ioutil.ReadFile(node.Filename)
 }
 
-func printDupls(t *suffixtree.STree, fr text.FileReader) {
+func printDupls(t *suffixtree.STree, fr output.FileReader) {
 	// finish stream
 	t.Update(char(-1))
 
 	// print clones
-	printer := text.NewPrinter(os.Stdout, fr)
+	var p output.Printer
+	if *html {
+		p = output.NewHtmlPrinter(os.Stdout, fr)
+	} else {
+		p = output.NewTextPrinter(os.Stdout, fr)
+	}
 	mchan := t.FindDuplOver(*threshold)
-	cnt := 0
 	for m := range mchan {
 		if dups := syntax.FindSyntaxUnits(t, m, *threshold); len(dups) != 0 {
-			printer.Print(dups)
-			cnt++
+			p.Print(dups)
 		}
 	}
-	fmt.Printf("\nFound total %d clone groups.\n", cnt)
+	p.Finish()
 }

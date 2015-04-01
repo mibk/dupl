@@ -1,4 +1,4 @@
-package text
+package output
 
 import (
 	"fmt"
@@ -11,19 +11,26 @@ type FileReader interface {
 	ReadFile(node *syntax.Node) ([]byte, error)
 }
 
-type Printer struct {
-	writer  io.Writer
-	freader FileReader
+type Printer interface {
+	Print(dups []*syntax.Seq)
+	Finish()
 }
 
-func NewPrinter(w io.Writer, fr FileReader) *Printer {
-	return &Printer{
+type TextPrinter struct {
+	writer  io.Writer
+	freader FileReader
+	cnt     int
+}
+
+func NewTextPrinter(w io.Writer, fr FileReader) *TextPrinter {
+	return &TextPrinter{
 		writer:  w,
 		freader: fr,
 	}
 }
 
-func (p *Printer) Print(dups []*syntax.Seq) {
+func (p *TextPrinter) Print(dups []*syntax.Seq) {
+	p.cnt++
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
 	for i, dup := range dups {
 		cnt := len(dup.Nodes)
@@ -45,6 +52,10 @@ func (p *Printer) Print(dups []*syntax.Seq) {
 		}
 		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, filename, lstart, lend)
 	}
+}
+
+func (p *TextPrinter) Finish() {
+	fmt.Fprintf(p.writer, "\nFound total %d clone groups.\n", p.cnt)
 }
 
 func blockLines(file []byte, from, to int) (int, int) {
