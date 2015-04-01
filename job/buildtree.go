@@ -18,11 +18,7 @@ func BuildTree(bchan chan *Batch) (t *suffixtree.STree, done chan bool) {
 	t = suffixtree.New()
 	done = make(chan bool)
 	go func() {
-		for {
-			batch, ok := <-bchan
-			if !ok {
-				break
-			}
+		for batch := range bchan {
 			for _, item := range batch.seq {
 				item.Addr = batch.addr
 				t.Update(item)

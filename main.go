@@ -51,11 +51,7 @@ func main() {
 		schan := job.CrawlDir(dir)
 		bchan := make(chan *job.Batch)
 		go func() {
-			for {
-				seq, ok := <-schan
-				if !ok {
-					break
-				}
+			for seq := range schan {
 				bchan <- job.NewBatch("", seq)
 			}
 			close(bchan)
@@ -104,14 +100,10 @@ func runServer() {
 			server.ch = make(chan []*syntax.Node)
 			go func() {
 				schan := job.CrawlDir(dir)
-				for {
-					seq, ok := <-schan
-					if !ok {
-						close(server.ch)
-						break
-					}
+				for seq := range schan {
 					server.ch <- seq
 				}
+				close(server.ch)
 			}()
 			rpc.ServeConn(conn)
 			log.Println("done")
@@ -191,11 +183,7 @@ func printDupls(t *suffixtree.STree, fr text.FileReader) {
 	printer := text.NewPrinter(os.Stdout, fr)
 	mchan := t.FindDuplOver(*threshold)
 	cnt := 0
-	for {
-		m, ok := <-mchan
-		if !ok {
-			break
-		}
+	for m := range mchan {
 		if dups := syntax.FindSyntaxUnits(t, m, *threshold); len(dups) != 0 {
 			printer.Print(dups)
 			cnt++

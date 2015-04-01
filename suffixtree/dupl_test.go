@@ -68,11 +68,7 @@ All work and no play makes Jack a dull boy$`, 4, []Match{{[]Pos{0, 43}, 42}}},
 				t.Errorf("got %v, want %v", act, exp)
 			}
 		}
-		for {
-			act, ok := <-ch
-			if !ok {
-				break
-			}
+		for act := range ch {
 			t.Errorf("beyond expected match %v for '%s'", act, tc.s)
 		}
 	}

@@ -27,11 +27,7 @@ func CrawlDir(dir string) chan []*syntax.Node {
 	// parse AST
 	achan := make(chan *syntax.Node)
 	go func() {
-		for {
-			file, ok := <-fchan
-			if !ok {
-				break
-			}
+		for file := range fchan {
 			ast, err := golang.Parse(file)
 			if err != nil {
 				log.Println(err)
@@ -45,11 +41,7 @@ func CrawlDir(dir string) chan []*syntax.Node {
 	// serialize
 	schan := make(chan []*syntax.Node)
 	go func() {
-		for {
-			ast, ok := <-achan
-			if !ok {
-				break
-			}
+		for ast := range achan {
 			seq := syntax.Serialize(ast)
 			schan <- seq
 		}
