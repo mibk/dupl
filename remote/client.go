@@ -43,28 +43,36 @@ func RunClient(addrs []string) (*suffixtree.STree, map[string]*rpc.Client) {
 	log.Println("connection established")
 
 	bchan := make(chan *job.Batch)
-	t, done := job.BuildTree(bchan)
+	t, built := job.BuildTree(bchan)
 
-	tempClients := make(map[string]*rpc.Client)
+	clientCnt := len(clients)
+	cchan := make(chan *rpc.Call, clientCnt)
+	done := make(chan bool)
 	for addr, client := range clients {
-		tempClients[addr] = client
-	}
-
-	for len(tempClients) > 0 {
-		for addr, client := range tempClients {
-			var reply Response
-			err := client.Call("Scanner.Next", true, &reply)
-			if err != nil {
-				log.Fatal(err)
+		addr, client := addr, client
+		go func() {
+			for {
+				var reply Response
+				call := client.Go("Scanner.Next", true, &reply, cchan)
+				<-call.Done
+				if call.Error != nil {
+					log.Fatal(call.Error)
+				}
+				if reply.Done {
+					clientCnt--
+					if clientCnt == 0 {
+						close(cchan)
+						done <- true
+					}
+					return
+				}
+				bchan <- job.NewBatch(addr, reply.Seq)
 			}
-			if reply.Done {
-				delete(tempClients, addr)
-			}
-			bchan <- job.NewBatch(addr, reply.Seq)
-		}
+		}()
 	}
+	<-done
 	close(bchan)
 
-	<-done
+	<-built
 	return t, clients
 }
