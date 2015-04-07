@@ -41,7 +41,7 @@ func New() *STree {
 // Update refreshes the suffix tree to by new data.
 func (t *STree) Update(data ...Token) {
 	t.data = append(t.data, data...)
-	for _ = range data {
+	for range data {
 		t.update()
 		t.s, t.start = t.canonize(t.s, t.start, t.end)
 		t.end++
@@ -119,7 +119,8 @@ func (t *STree) canonize(s *state, start, end Pos) (*state, Pos) {
 		if start <= end {
 			tr = s.findTran(t.data[start])
 			if tr == nil {
-				panic(fmt.Sprintf("there should be some transition for '%d' at %d", t.data[start].Val(), start))
+				panic(fmt.Sprintf("there should be some transition for '%d' at %d",
+					t.data[start].Val(), start))
 			}
 		}
 		if tr.end-tr.start > end-start {
