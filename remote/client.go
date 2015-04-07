@@ -51,8 +51,8 @@ func RunClient(addrs []string) (*suffixtree.STree, map[string]*rpc.Client) {
 	}
 
 	for len(tempClients) > 0 {
-		var reply Response
 		for addr, client := range tempClients {
+			var reply Response
 			err := client.Call("Scanner.Next", true, &reply)
 			if err != nil {
 				log.Fatal(err)
