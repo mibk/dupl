@@ -77,7 +77,8 @@ func toWhitespace(str []byte) []byte {
 }
 
 func deindent(block []byte) []byte {
-	min := 99
+	const maxVal = 99
+	min := maxVal
 	re := regexp.MustCompile(`(^|\n)(\t*)\S`)
 	for _, line := range re.FindAllSubmatch(block, -1) {
 		indent := line[2]
@@ -85,7 +86,7 @@ func deindent(block []byte) []byte {
 			min = len(indent)
 		}
 	}
-	if min == 0 {
+	if min == 0 || min == maxVal {
 		return block
 	}
 	block = block[min:]
