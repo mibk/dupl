@@ -16,7 +16,6 @@ func newSeq(cnt int) *Seq {
 
 type Node struct {
 	Type     int
-	Addr     string
 	Filename string
 	Pos, End int
 	Children []*Node
@@ -51,42 +50,41 @@ func serial(n *Node, stream *[]*Node) int {
 	return count + 1
 }
 
-// FindSyntaxUnits finds all complete syntax units in the match pair and returns them.
-func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int) []*Seq {
-	i := 0
-	indexes := make([]suffixtree.Pos, 0)
-	for i < int(m.Len) {
-		n := getNode(stree.At(m.Ps[0] + suffixtree.Pos(i)))
-		if n.Owns >= int(m.Len)-i {
+// FindSyntaxUnits finds all complete syntax units in the match group and returns them.
+func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) []*Seq {
+	indexes := make([]int, 0)
+	for i, n := range nodeSeqs[0] {
+		if n.Owns >= len(nodeSeqs[0])-i {
 			// not complete syntax unit
 			i++
 			continue
 		} else if n.Owns >= threshold {
-			indexes = append(indexes, suffixtree.Pos(i))
+			indexes = append(indexes, i)
 		}
 		i += n.Owns + 1
 	}
 
+	// TODO: is this really working?
 	indexCnt := len(indexes)
 	if indexCnt > 0 {
 		lasti := indexes[indexCnt-1]
-		firstn := getNode(stree.At(m.Ps[0] + lasti))
-		for i := 1; i < len(m.Ps); i++ {
-			n := getNode(stree.At(m.Ps[i] + lasti))
+		firstn := nodeSeqs[0][lasti]
+		for i := 1; i < len(nodeSeqs); i++ {
+			n := nodeSeqs[i][lasti]
 			if firstn.Owns != n.Owns {
 				indexes = indexes[:indexCnt-1]
 				break
 			}
 		}
 	}
-	if len(indexes) == 0 || isCyclic(stree, indexes, m.Ps[0]) {
+	if len(indexes) == 0 || isCyclic(indexes, nodeSeqs[0]) {
 		return make([]*Seq, 0)
 	}
-	seqs := make([]*Seq, len(m.Ps))
-	for i, pos := range m.Ps {
+	seqs := make([]*Seq, len(nodeSeqs))
+	for i, nodes := range nodeSeqs {
 		seqs[i] = newSeq(len(indexes))
 		for j, index := range indexes {
-			seqs[i].Nodes[j] = getNode(stree.At(pos + index))
+			seqs[i].Nodes[j] = nodes[index]
 		}
 	}
 	return seqs
@@ -94,7 +92,7 @@ func FindSyntaxUnits(stree *suffixtree.STree, m suffixtree.Match, threshold int)
 
 // isCyclic finds out whether there is a repetive pattern in the found clone. If positive,
 // it return false to point out that the clone would be redundant.
-func isCyclic(stree *suffixtree.STree, indexes []suffixtree.Pos, startPos suffixtree.Pos) bool {
+func isCyclic(indexes []int, nodes []*Node) bool {
 	cnt := len(indexes)
 	if cnt <= 1 {
 		return false
@@ -105,11 +103,12 @@ func isCyclic(stree *suffixtree.STree, indexes []suffixtree.Pos, startPos suffix
 		alts[i] = true
 	}
 
-	for i := startPos; i < startPos+indexes[cnt/2]; i++ {
-		nstart := getNode(stree.At(i + indexes[0]))
+	for i := 0; i < indexes[cnt/2]; i++ {
+		// nstart := getNode(stree.At(i + indexes[0]))
+		nstart := nodes[indexes[0]]
 		for alt := range alts {
 			for j := alt; j < cnt; j += alt {
-				nalt := getNode(stree.At(i + indexes[j]))
+				nalt := nodes[indexes[j]]
 				if nstart.Owns != nalt.Owns || nstart.Type != nalt.Type {
 					delete(alts, alt)
 				}
@@ -120,6 +119,18 @@ func isCyclic(stree *suffixtree.STree, indexes []suffixtree.Pos, startPos suffix
 		}
 	}
 	return true
+}
+
+func GetNodes(stree *suffixtree.STree, m suffixtree.Match) [][]*Node {
+	seqs := make([][]*Node, len(m.Ps))
+	for i, pos := range m.Ps {
+		seq := make([]*Node, m.Len)
+		for j := suffixtree.Pos(0); j < m.Len; j++ {
+			seq[j] = getNode(stree.At(pos + j))
+		}
+		seqs[i] = seq
+	}
+	return seqs
 }
 
 func getNode(tok suffixtree.Token) *Node {

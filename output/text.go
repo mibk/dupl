@@ -46,11 +46,7 @@ func (p *TextPrinter) Print(dups []*syntax.Seq) {
 		}
 
 		lstart, lend := blockLines(file, nstart.Pos, nend.End)
-		filename := nstart.Filename
-		if nstart.Addr != "" {
-			filename = nstart.Addr + "@" + filename
-		}
-		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, filename, lstart, lend)
+		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, nstart.Filename, lstart, lend)
 	}
 }
 

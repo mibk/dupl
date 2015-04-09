@@ -5,23 +5,13 @@ import (
 	"fm.tul.cz/dupl/syntax"
 )
 
-type Batch struct {
-	addr string
-	seq  []*syntax.Node
-}
-
-func NewBatch(addr string, seq []*syntax.Node) *Batch {
-	return &Batch{addr, seq}
-}
-
-func BuildTree(bchan chan *Batch) (t *suffixtree.STree, done chan bool) {
+func BuildTree(schan chan []*syntax.Node) (t *suffixtree.STree, done chan bool) {
 	t = suffixtree.New()
 	done = make(chan bool)
 	go func() {
-		for batch := range bchan {
-			for _, item := range batch.seq {
-				item.Addr = batch.addr
-				t.Update(item)
+		for seq := range schan {
+			for _, node := range seq {
+				t.Update(node)
 			}
 		}
 		done <- true

@@ -42,15 +42,11 @@ func (p *HtmlPrinter) Print(dups []*syntax.Seq) {
 		nstart := dup.Nodes[0]
 		nend := dup.Nodes[cnt-1]
 
-		filename := nstart.Filename
-		if nstart.Addr != "" {
-			filename = nstart.Addr + "@" + filename
-		}
 		file, err := p.freader.ReadFile(nstart)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Fprintf(p.writer, "<h2>%s</h2>\n", filename)
+		fmt.Fprintf(p.writer, "<h2>%s</h2>\n", nstart.Filename)
 		start := findLineBeg(file, nstart.Pos)
 		content := append(toWhitespace(file[start:nstart.Pos]), file[nstart.Pos:nend.End]...)
 		fmt.Fprintf(p.writer, "<pre>%s</pre>\n", deindent(content))

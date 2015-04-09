@@ -9,7 +9,6 @@ import (
 	"fm.tul.cz/dupl/job"
 	"fm.tul.cz/dupl/output"
 	"fm.tul.cz/dupl/remote"
-	"fm.tul.cz/dupl/suffixtree"
 	"fm.tul.cz/dupl/syntax"
 )
 
@@ -43,29 +42,28 @@ func main() {
 	}
 
 	if len(addrs) != 0 {
-		t, clients := remote.RunClient(addrs)
-		printDupls(t, remote.NewFileReader(clients))
+		nodesChan := remote.RunClient(addrs, *threshold, dir)
+		printDupls(nodesChan)
 	} else if *serverPort != "" {
-		remote.RunServer(*serverPort, dir)
+		remote.RunServer(*serverPort)
 	} else {
 		schan := job.CrawlDir(dir)
-		bchan := make(chan *job.Batch)
-		go func() {
-			for seq := range schan {
-				bchan <- job.NewBatch("", seq)
-			}
-			close(bchan)
-		}()
-		t, done := job.BuildTree(bchan)
+		t, done := job.BuildTree(schan)
 		<-done
-		printDupls(t, new(LocalFileReader))
+
+		// finish stream
+		t.Update(&syntax.Node{Type: -1})
+
+		mchan := t.FindDuplOver(*threshold)
+		nodesChan := make(chan [][]*syntax.Node)
+		go func() {
+			for m := range mchan {
+				nodesChan <- syntax.GetNodes(t, m)
+			}
+			close(nodesChan)
+		}()
+		printDupls(nodesChan)
 	}
-}
-
-type char int
-
-func (c char) Val() int {
-	return int(c)
 }
 
 type LocalFileReader struct{}
@@ -74,22 +72,20 @@ func (r *LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
 	return ioutil.ReadFile(node.Filename)
 }
 
-func printDupls(t *suffixtree.STree, fr output.FileReader) {
-	// finish stream
-	t.Update(char(-1))
-
-	// print clones
-	var p output.Printer
-	if *html {
-		p = output.NewHtmlPrinter(os.Stdout, fr)
-	} else {
-		p = output.NewTextPrinter(os.Stdout, fr)
-	}
-	mchan := t.FindDuplOver(*threshold)
-	for m := range mchan {
-		if dups := syntax.FindSyntaxUnits(t, m, *threshold); len(dups) != 0 {
+func printDupls(nodesChan <-chan [][]*syntax.Node) {
+	p := getPrinter()
+	for seqs := range nodesChan {
+		if dups := syntax.FindSyntaxUnits(seqs, *threshold); len(dups) != 0 {
 			p.Print(dups)
 		}
 	}
 	p.Finish()
+}
+
+func getPrinter() output.Printer {
+	fr := new(LocalFileReader)
+	if *html {
+		return output.NewHtmlPrinter(os.Stdout, fr)
+	}
+	return output.NewTextPrinter(os.Stdout, fr)
 }
