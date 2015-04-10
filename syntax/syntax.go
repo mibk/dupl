@@ -104,11 +104,10 @@ func isCyclic(indexes []int, nodes []*Node) bool {
 	}
 
 	for i := 0; i < indexes[cnt/2]; i++ {
-		// nstart := getNode(stree.At(i + indexes[0]))
-		nstart := nodes[indexes[0]]
+		nstart := nodes[i+indexes[0]]
 		for alt := range alts {
 			for j := alt; j < cnt; j += alt {
-				nalt := nodes[indexes[j]]
+				nalt := nodes[i+indexes[j]]
 				if nstart.Owns != nalt.Owns || nstart.Type != nalt.Type {
 					delete(alts, alt)
 				}

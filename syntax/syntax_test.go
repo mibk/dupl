@@ -1,10 +1,6 @@
 package syntax
 
-import (
-	"testing"
-
-	"fm.tul.cz/dupl/suffixtree"
-)
+import "testing"
 
 func TestSerialization(t *testing.T) {
 	n := genNodes(7)
@@ -49,25 +45,22 @@ func compareSeries(t *testing.T, stream []*Node, owns []int) {
 func TestCyclicDupl(t *testing.T) {
 	testCases := []struct {
 		seq      string
-		indexes  []suffixtree.Pos
+		indexes  []int
 		expected bool
 	}{
-		{"a1 b0 a2 b0", []suffixtree.Pos{0, 2}, false},
-		{"a1 b0 a1 b0", []suffixtree.Pos{0, 2}, true},
-		{"a0 a0", []suffixtree.Pos{0, 1}, true},
-		{"a1 b0 c1 b0 a1 b0 c1 b0", []suffixtree.Pos{0, 2, 4, 6}, true},
-		{"a1 b0 c1 b0 a1 b0", []suffixtree.Pos{0, 2, 4}, false},
-		{"a0 b0 a0 c0", []suffixtree.Pos{0, 1, 2, 3}, false},
-		{"a0 b0 a0 b0 a0", []suffixtree.Pos{0, 1, 2}, false},
-		{"a1 b0 a1 b0 c1 b0", []suffixtree.Pos{0, 2, 4}, false},
+		{"a1 b0 a2 b0", []int{0, 2}, false},
+		{"a1 b0 a1 b0", []int{0, 2}, true},
+		{"a0 a0", []int{0, 1}, true},
+		{"a1 b0 c1 b0 a1 b0 c1 b0", []int{0, 2, 4, 6}, true},
+		{"a1 b0 c1 b0 a1 b0", []int{0, 2, 4}, false},
+		{"a0 b0 a0 c0", []int{0, 1, 2, 3}, false},
+		{"a0 b0 a0 b0 a0", []int{0, 1, 2}, false},
+		{"a1 b0 a1 b0 c1 b0", []int{0, 2, 4}, false},
 	}
 
 	for _, tc := range testCases {
-		stree := suffixtree.New()
-		for _, n := range str2nodes(tc.seq) {
-			stree.Update(n)
-		}
-		if tc.expected != isCyclic(stree, tc.indexes, suffixtree.Pos(0)) {
+		nodes := str2nodes(tc.seq)
+		if tc.expected != isCyclic(tc.indexes, nodes) {
 			t.Errorf("for seq '%s', indexes %v, got %t, want %t", tc.seq, tc.indexes, !tc.expected, tc.expected)
 		}
 	}
