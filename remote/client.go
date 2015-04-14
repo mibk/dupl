@@ -24,11 +24,18 @@ func (r *router) AddClient(slotId int, client *rpc.Client) {
 	r.Slots[slotId] = append(r.Slots[slotId], client)
 }
 
-func RunClient(addrs []string, threshold int, dir string) <-chan [][]*syntax.Node {
-	addrClients := make(map[string]*rpc.Client)
-	clients := make([]*rpc.Client, 0, len(addrs))
+type worker struct {
+	clients  []*rpc.Client
+	router   *router
+	batchCnt int
+}
+
+func newWorker(addrs []string) *worker {
+	w := &worker{}
+	usedAddrs := make(map[string]bool)
+	w.clients = make([]*rpc.Client, 0, len(addrs))
 	for _, addr := range addrs {
-		if _, present := addrClients[addr]; present {
+		if _, present := usedAddrs[addr]; present {
 			// ignore duplicate addr
 			continue
 		}
@@ -36,53 +43,73 @@ func RunClient(addrs []string, threshold int, dir string) <-chan [][]*syntax.Nod
 		if err != nil {
 			log.Fatal(err)
 		}
-		clients = append(clients, client)
-		addrClients[addr] = client
+		w.clients = append(w.clients, client)
+		usedAddrs[addr] = true
 	}
-	log.Println("connection established")
 
-	// count number of batches for the given number of clients
-	batchCnt := int(math.Ceil(math.Sqrt(2*float64(len(clients))+0.25) + 0.5))
+	w.batchCnt = batchCount(len(w.clients))
 
-	router := newRouter()
+	w.router = newRouter()
 	id := 0
-	for i := 0; i < batchCnt-1; i++ {
-		for j := i + 1; j < batchCnt; j++ {
-			router.AddClient(i, clients[id])
-			router.AddClient(j, clients[id])
-			id = (id + 1) % len(clients)
+	for i := 0; i < w.batchCnt-1; i++ {
+		for j := i + 1; j < w.batchCnt; j++ {
+			w.router.AddClient(i, w.clients[id])
+			w.router.AddClient(j, w.clients[id])
+			id = (id + 1) % len(w.clients)
 		}
 	}
+	return w
+}
 
-	schan := job.CrawlDir(dir)
-	nodesChan := make(chan [][]*syntax.Node)
-	go func() {
-		batch := 0
-		for seq := range schan {
-			for _, client := range router.Slots[batch] {
-				err := client.Call("Dupl.UpdateTree", seq, nil)
-				if err != nil {
-					log.Fatal(err)
-				}
+func (w *worker) Work(schan chan []*syntax.Node, nodesChan chan [][]*syntax.Node, threshold int) {
+	batch := 0
+	for seq := range schan {
+		for _, client := range w.router.Slots[batch] {
+			err := client.Call("Dupl.UpdateTree", seq, nil)
+			if err != nil {
+				log.Fatal(err)
 			}
-			batch = (batch + 1) % batchCnt
 		}
+		batch = (batch + 1) % w.batchCnt
+	}
 
-		for len(addrClients) > 0 {
-			for addr, client := range addrClients {
+	clientCnt := len(w.clients)
+	for _, client := range w.clients {
+		client := client
+		go func() {
+			for {
 				var reply Response
 				err := client.Call("Dupl.NextMatch", threshold, &reply)
+
 				if err != nil {
 					log.Fatal(err)
 				}
 				if reply.Done {
-					delete(addrClients, addr)
-					continue
+					clientCnt--
+					if clientCnt == 0 {
+						close(nodesChan)
+					}
+					return
 				}
 				nodesChan <- reply.Match
 			}
-		}
-		close(nodesChan)
-	}()
+		}()
+	}
+}
+
+// batchCount returns number of batches for the given number
+// of clients.
+func batchCount(clientsCnt int) int {
+	return int(math.Ceil(math.Sqrt(2*float64(clientsCnt)+0.25) + 0.5))
+}
+
+func RunClient(addrs []string, threshold int, dir string) <-chan [][]*syntax.Node {
+	w := newWorker(addrs)
+	log.Println("connection established")
+
+	schan := job.CrawlDir(dir)
+	nodesChan := make(chan [][]*syntax.Node)
+	go w.Work(schan, nodesChan, threshold)
+
 	return nodesChan
 }
