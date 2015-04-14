@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"crypto/sha1"
 	"fmt"
 
 	"fm.tul.cz/dupl/suffixtree"
@@ -50,8 +51,9 @@ func serial(n *Node, stream *[]*Node) int {
 	return count + 1
 }
 
-// FindSyntaxUnits finds all complete syntax units in the match group and returns them.
-func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) []*Seq {
+// FindSyntaxUnits finds all complete syntax units in the match group and returns them
+// with the corresponding hash.
+func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([]*Seq, string) {
 	indexes := make([]int, 0)
 	for i, n := range nodeSeqs[0] {
 		if n.Owns >= len(nodeSeqs[0])-i {
@@ -78,7 +80,7 @@ func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) []*Seq {
 		}
 	}
 	if len(indexes) == 0 || isCyclic(indexes, nodeSeqs[0]) {
-		return make([]*Seq, 0)
+		return make([]*Seq, 0), ""
 	}
 	seqs := make([]*Seq, len(nodeSeqs))
 	for i, nodes := range nodeSeqs {
@@ -87,7 +89,11 @@ func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) []*Seq {
 			seqs[i].Nodes[j] = nodes[index]
 		}
 	}
-	return seqs
+
+	lastIndex := indexes[len(indexes)-1]
+	firstSeq := nodeSeqs[0]
+	hash := hashSeq(firstSeq[indexes[0] : lastIndex+firstSeq[lastIndex].Owns])
+	return seqs, hash
 }
 
 // isCyclic finds out whether there is a repetive pattern in the found clone. If positive,
@@ -144,4 +150,14 @@ func getNode(tok suffixtree.Token) *Node {
 		return n
 	}
 	panic(fmt.Sprintf("tok (type %T)  is not type *Node", tok))
+}
+
+func hashSeq(nodes []*Node) string {
+	h := sha1.New()
+	bytes := make([]byte, len(nodes))
+	for i, node := range nodes {
+		bytes[i] = byte(node.Type)
+	}
+	h.Write(bytes)
+	return string(h.Sum(nil))
 }

@@ -73,11 +73,20 @@ func (r *LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
 }
 
 func printDupls(nodesChan <-chan [][]*syntax.Node) {
-	p := getPrinter()
+	groups := make(map[string][]*syntax.Seq)
 	for seqs := range nodesChan {
-		if dups := syntax.FindSyntaxUnits(seqs, *threshold); len(dups) != 0 {
-			p.Print(dups)
+		if dups, hash := syntax.FindSyntaxUnits(seqs, *threshold); len(dups) != 0 {
+			if _, ok := groups[hash]; ok {
+				groups[hash] = JoinGroups(groups[hash], dups)
+			} else {
+				groups[hash] = dups
+			}
 		}
+	}
+
+	p := getPrinter()
+	for _, group := range groups {
+		p.Print(group)
 	}
 	p.Finish()
 }
@@ -88,4 +97,9 @@ func getPrinter() output.Printer {
 		return output.NewHtmlPrinter(os.Stdout, fr)
 	}
 	return output.NewTextPrinter(os.Stdout, fr)
+}
+
+func JoinGroups(grp1, grp2 []*syntax.Seq) []*syntax.Seq {
+	// TODO: rm redundant fragments
+	return append(grp1, grp2...)
 }
