@@ -46,7 +46,8 @@ func (p *HtmlPrinter) Print(dups []*syntax.Seq) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Fprintf(p.writer, "<h2>%s</h2>\n", nstart.Filename)
+		lineStart, _ := blockLines(file, nstart.Pos, nend.End)
+		fmt.Fprintf(p.writer, "<h2>%s:%d</h2>\n", nstart.Filename, lineStart)
 		start := findLineBeg(file, nstart.Pos)
 		content := append(toWhitespace(file[start:nstart.Pos]), file[nstart.Pos:nend.End]...)
 		fmt.Fprintf(p.writer, "<pre>%s</pre>\n", deindent(content))
