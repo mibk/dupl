@@ -56,6 +56,7 @@ func TestCyclicDupl(t *testing.T) {
 		{"a0 b0 a0 c0", []int{0, 1, 2, 3}, false},
 		{"a0 b0 a0 b0 a0", []int{0, 1, 2}, false},
 		{"a1 b0 a1 b0 c1 b0", []int{0, 2, 4}, false},
+		{"a1 a1 a1 a1 a1 a1", []int{0, 4}, false},
 	}
 
 	for _, tc := range testCases {

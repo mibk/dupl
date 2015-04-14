@@ -98,6 +98,7 @@ func isCyclic(indexes []int, nodes []*Node) bool {
 		return false
 	}
 
+	// TODO: simplify algorithm
 	alts := make(map[int]bool)
 	for i := 1; i <= cnt/2; i++ {
 		alts[i] = true
@@ -105,12 +106,18 @@ func isCyclic(indexes []int, nodes []*Node) bool {
 
 	for i := 0; i < indexes[cnt/2]; i++ {
 		nstart := nodes[i+indexes[0]]
+	AltLoop:
 		for alt := range alts {
 			for j := alt; j < cnt; j += alt {
-				nalt := nodes[i+indexes[j]]
-				if nstart.Owns != nalt.Owns || nstart.Type != nalt.Type {
-					delete(alts, alt)
+				index := i + indexes[j]
+				if index < len(nodes) {
+					nalt := nodes[index]
+					if nstart.Owns == nalt.Owns && nstart.Type == nalt.Type {
+						continue
+					}
 				}
+				delete(alts, alt)
+				continue AltLoop
 			}
 		}
 		if len(alts) == 0 {
