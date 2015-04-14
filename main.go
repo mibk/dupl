@@ -77,7 +77,7 @@ func printDupls(nodesChan <-chan [][]*syntax.Node) {
 	for seqs := range nodesChan {
 		if dups, hash := syntax.FindSyntaxUnits(seqs, *threshold); len(dups) != 0 {
 			if _, ok := groups[hash]; ok {
-				groups[hash] = JoinGroups(groups[hash], dups)
+				groups[hash] = append(groups[hash], dups...)
 			} else {
 				groups[hash] = dups
 			}
@@ -86,7 +86,7 @@ func printDupls(nodesChan <-chan [][]*syntax.Node) {
 
 	p := getPrinter()
 	for _, group := range groups {
-		p.Print(group)
+		p.Print(Unique(group))
 	}
 	p.Finish()
 }
@@ -99,7 +99,21 @@ func getPrinter() output.Printer {
 	return output.NewTextPrinter(os.Stdout, fr)
 }
 
-func JoinGroups(grp1, grp2 []*syntax.Seq) []*syntax.Seq {
-	// TODO: rm redundant fragments
-	return append(grp1, grp2...)
+func Unique(group []*syntax.Seq) []*syntax.Seq {
+	fileMap := make(map[string]map[int]bool)
+
+	newGroup := make([]*syntax.Seq, 0)
+	for _, seq := range group {
+		node := seq.Nodes[0]
+		file, ok := fileMap[node.Filename]
+		if !ok {
+			file = make(map[int]bool)
+			fileMap[node.Filename] = file
+		}
+		if _, ok = file[node.Pos]; !ok {
+			file[node.Pos] = true
+			newGroup = append(newGroup, seq)
+		}
+	}
+	return newGroup
 }
