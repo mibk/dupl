@@ -65,10 +65,13 @@ func (w *worker) Work(schan chan []*syntax.Node, nodesChan chan [][]*syntax.Node
 	batch := 0
 	for seq := range schan {
 		for _, client := range w.router.Slots[batch] {
-			err := client.Call("Dupl.UpdateTree", seq, nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+			seq, client := seq, client
+			go func() {
+				err := client.Call("Dupl.UpdateTree", seq, nil)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}()
 		}
 		batch = (batch + 1) % w.batchCnt
 	}
