@@ -86,8 +86,12 @@ func printDupls(nodesChan <-chan [][]*syntax.Node) {
 
 	p := getPrinter()
 	for _, group := range groups {
-		p.Print(Unique(group))
+		uniq := Unique(group)
+		if len(uniq) != 1 {
+			p.Print(uniq)
+		}
 	}
+
 	p.Finish()
 }
 
