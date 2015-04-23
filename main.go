@@ -12,9 +12,11 @@ import (
 	"fm.tul.cz/dupl/syntax"
 )
 
+const DefaultThreshold = 15
+
 var (
 	dir        = "."
-	threshold  = flag.Int("t", 15, "minimum token sequence as a clone")
+	threshold  = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
 	serverPort = flag.String("serve", "", "run server at port")
 	addrs      AddrList
 	html       = flag.Bool("html", false, "html output")
@@ -32,7 +34,9 @@ func (l *AddrList) Set(val string) error {
 }
 
 func init() {
-	flag.Var(&addrs, "c", "connect to the given 'addr:port'")
+	flag.IntVar(threshold, "t", DefaultThreshold, "alias for -threshold")
+	flag.Var(&addrs, "connect", "connect to the given 'addr:port'")
+	flag.Var(&addrs, "c", "alias for -connect")
 }
 
 func main() {
