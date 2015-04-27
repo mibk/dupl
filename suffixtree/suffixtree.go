@@ -91,7 +91,7 @@ func (t *STree) testAndSplit(s *state, start, end Pos) (exs *state, endPoint boo
 			return s, true
 		}
 		// make the (s, (start, end)) state explicit
-		newSt := newState(s.t)
+		newSt := newState(s.tree)
 		newSt.addTran(splitPoint, tr.end, tr.state)
 		tr.end = splitPoint - 1
 		tr.state = newSt
@@ -158,14 +158,14 @@ func printState(buf *bytes.Buffer, s *state, ident int) {
 
 // state is an explicit state of the suffix tree.
 type state struct {
-	t         *STree
+	tree      *STree
 	trans     []*tran
 	linkState *state
 }
 
 func newState(t *STree) *state {
 	return &state{
-		t:         t,
+		tree:      t,
 		trans:     make([]*tran, 0),
 		linkState: nil,
 	}
@@ -177,7 +177,7 @@ func (s *state) addTran(start, end Pos, r *state) {
 
 // fork creates a new branch from the state s.
 func (s *state) fork(i Pos) *state {
-	r := newState(s.t)
+	r := newState(s.tree)
 	s.addTran(i, infinity, r)
 	return r
 }
@@ -185,7 +185,7 @@ func (s *state) fork(i Pos) *state {
 // findTran finds c-transition.
 func (s *state) findTran(c Token) *tran {
 	for _, tran := range s.trans {
-		if s.t.data[tran.start].Val() == c.Val() {
+		if s.tree.data[tran.start].Val() == c.Val() {
 			return tran
 		}
 	}
@@ -210,7 +210,7 @@ func (t *tran) len() int {
 // the actual length of the data in the STree.
 func (t *tran) ActEnd() Pos {
 	if t.end == infinity {
-		return Pos(len(t.state.t.data)) - 1
+		return Pos(len(t.state.tree.data)) - 1
 	}
 	return t.end
 }

@@ -82,8 +82,8 @@ func compareTrees(t *testing.T, expected, actual *state) {
 		}
 		if etran.start != atran.start || etran.ActEnd() != atran.ActEnd() {
 			t.Errorf("got transition (%d, %d) '%s', want (%d, %d) '%s'",
-				atran.start, atran.ActEnd(), actual.t.data[atran.start:atran.ActEnd()+1],
-				etran.start, etran.ActEnd(), expected.t.data[etran.start:etran.ActEnd()+1],
+				atran.start, atran.ActEnd(), actual.tree.data[atran.start:atran.ActEnd()+1],
+				etran.start, etran.ActEnd(), expected.tree.data[etran.start:etran.ActEnd()+1],
 			)
 		}
 	}

@@ -70,7 +70,7 @@ func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *contextLis
 		pl.add(start)
 		ch := 0
 		if start > 0 {
-			ch = s.t.data[start-1].Val()
+			ch = s.tree.data[start-1].Val()
 		}
 		cl.lists[ch] = pl
 		return cl
