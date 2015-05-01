@@ -54,19 +54,7 @@ func serial(n *Node, stream *[]*Node) int {
 // FindSyntaxUnits finds all complete syntax units in the match group and returns them
 // with the corresponding hash.
 func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([]*Seq, string) {
-	// TODO: to separate func
-	indexes := make([]int, 0)
-	for i := 0; i < len(nodeSeqs[0]); {
-		n := nodeSeqs[0][i]
-		if n.Owns >= len(nodeSeqs[0])-i {
-			// not complete syntax unit
-			i++
-			continue
-		} else if n.Owns >= threshold {
-			indexes = append(indexes, i)
-		}
-		i += n.Owns + 1
-	}
+	indexes := getUnitsIndexes(nodeSeqs[0], threshold)
 
 	// TODO: is this really working?
 	indexCnt := len(indexes)
@@ -96,6 +84,22 @@ func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([]*Seq, string) {
 	firstSeq := nodeSeqs[0]
 	hash := hashSeq(firstSeq[indexes[0] : lastIndex+firstSeq[lastIndex].Owns])
 	return seqs, hash
+}
+
+func getUnitsIndexes(nodeSeq []*Node, threshold int) []int {
+	indexes := make([]int, 0)
+	for i := 0; i < len(nodeSeq); {
+		n := nodeSeq[i]
+		if n.Owns >= len(nodeSeq)-i {
+			// not complete syntax unit
+			i++
+			continue
+		} else if n.Owns+1 >= threshold {
+			indexes = append(indexes, i)
+		}
+		i += n.Owns + 1
+	}
+	return indexes
 }
 
 // isCyclic finds out whether there is a repetive pattern in the found clone. If positive,

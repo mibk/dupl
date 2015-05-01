@@ -42,6 +42,32 @@ func compareSeries(t *testing.T, stream []*Node, owns []int) {
 	}
 }
 
+func TestGetUnitsIndexes(t *testing.T) {
+	testCases := []struct {
+		seq       string
+		threshold int
+		expected  []int
+	}{
+		{"a8 a0 a2 a0 a0", 3, []int{2}},
+		{"a0 a8 a2 a0 a0", 1, []int{0, 2}},
+		{"a3 a0 a0 a0 a1", 3, []int{0}},
+		{"a3 a0 a0 a0 a0", 1, []int{0, 4}},
+		{"a1 a0 a1 a0 a0", 2, []int{0, 2}},
+	}
+
+Loop:
+	for _, tc := range testCases {
+		nodes := str2nodes(tc.seq)
+		indexes := getUnitsIndexes(nodes, tc.threshold)
+		for i := range tc.expected {
+			if i > len(indexes)-1 || tc.expected[i] != indexes[i] {
+				t.Errorf("for seq '%s', got %v, want %v", tc.seq, indexes, tc.expected)
+			}
+			continue Loop
+		}
+	}
+}
+
 func TestCyclicDupl(t *testing.T) {
 	testCases := []struct {
 		seq      string
