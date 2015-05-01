@@ -54,8 +54,10 @@ func serial(n *Node, stream *[]*Node) int {
 // FindSyntaxUnits finds all complete syntax units in the match group and returns them
 // with the corresponding hash.
 func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([]*Seq, string) {
+	// TODO: to separate func
 	indexes := make([]int, 0)
-	for i, n := range nodeSeqs[0] {
+	for i := 0; i < len(nodeSeqs[0]); {
+		n := nodeSeqs[0][i]
 		if n.Owns >= len(nodeSeqs[0])-i {
 			// not complete syntax unit
 			i++
