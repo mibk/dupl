@@ -28,13 +28,21 @@ func (d *Dupl) UpdateTree(seq []*syntax.Node, ignore *bool) error {
 	return nil
 }
 
-func (d *Dupl) NextMatch(threshold int, r *Response) error {
+func (d *Dupl) FinishAndSetThreshold(threshold int, ignore *bool) error {
+	if d.finished {
+		return errors.New("suffix tree has been already finished")
+	}
+	d.finished = true
+	close(d.schan)
+	<-d.done
+	d.stree.Update(&syntax.Node{Type: -1})
+	d.mchan = d.stree.FindDuplOver(threshold)
+	return nil
+}
+
+func (d *Dupl) NextMatch(ignore bool, r *Response) error {
 	if !d.finished {
-		d.finished = true
-		close(d.schan)
-		<-d.done
-		d.stree.Update(&syntax.Node{Type: -1})
-		d.mchan = d.stree.FindDuplOver(threshold)
+		return errors.New("suffix tree is not finished yet")
 	}
 	m, ok := <-d.mchan
 	r.Match = syntax.GetMatchNodes(*d.data, m)

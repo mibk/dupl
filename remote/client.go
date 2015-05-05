@@ -80,9 +80,13 @@ func (w *worker) Work(schan chan []*syntax.Node, nodesChan chan [][]*syntax.Node
 	for _, client := range w.clients {
 		client := client
 		go func() {
+			err := client.Call("Dupl.FinishAndSetThreshold", threshold, nil)
+			if err != nil {
+				log.Fatal(err)
+			}
 			for {
 				var reply Response
-				err := client.Call("Dupl.NextMatch", threshold, &reply)
+				err := client.Call("Dupl.NextMatch", false, &reply)
 
 				if err != nil {
 					log.Fatal(err)
