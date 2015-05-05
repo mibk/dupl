@@ -6,14 +6,6 @@ import (
 	"fm.tul.cz/dupl/suffixtree"
 )
 
-type Seq struct {
-	Nodes []*Node
-}
-
-func newSeq(cnt int) *Seq {
-	return &Seq{make([]*Node, cnt)}
-}
-
 type Node struct {
 	Type     int
 	Filename string
@@ -52,7 +44,7 @@ func serial(n *Node, stream *[]*Node) int {
 
 // FindSyntaxUnits finds all complete syntax units in the match group and returns them
 // with the corresponding hash.
-func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([]*Seq, string) {
+func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([][]*Node, string) {
 	indexes := getUnitsIndexes(nodeSeqs[0], threshold)
 
 	// TODO: is this really working?
@@ -69,13 +61,13 @@ func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([]*Seq, string) {
 		}
 	}
 	if len(indexes) == 0 || isCyclic(indexes, nodeSeqs[0]) {
-		return make([]*Seq, 0), ""
+		return make([][]*Node, 0), ""
 	}
-	seqs := make([]*Seq, len(nodeSeqs))
+	seqs := make([][]*Node, len(nodeSeqs))
 	for i, nodes := range nodeSeqs {
-		seqs[i] = newSeq(len(indexes))
+		seqs[i] = make([]*Node, len(indexes))
 		for j, index := range indexes {
-			seqs[i].Nodes[j] = nodes[index]
+			seqs[i][j] = nodes[index]
 		}
 	}
 

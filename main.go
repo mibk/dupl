@@ -86,7 +86,7 @@ func (r *LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
 }
 
 func printDupls(nodesChan <-chan [][]*syntax.Node) {
-	groups := make(map[string][]*syntax.Seq)
+	groups := make(map[string][][]*syntax.Node)
 	for seqs := range nodesChan {
 		if dups, hash := syntax.FindSyntaxUnits(seqs, *threshold); len(dups) != 0 {
 			if _, ok := groups[hash]; ok {
@@ -116,12 +116,12 @@ func getPrinter() output.Printer {
 	return output.NewTextPrinter(os.Stdout, fr)
 }
 
-func Unique(group []*syntax.Seq) []*syntax.Seq {
+func Unique(group [][]*syntax.Node) [][]*syntax.Node {
 	fileMap := make(map[string]map[int]bool)
 
-	newGroup := make([]*syntax.Seq, 0)
+	newGroup := make([][]*syntax.Node, 0)
 	for _, seq := range group {
-		node := seq.Nodes[0]
+		node := seq[0]
 		file, ok := fileMap[node.Filename]
 		if !ok {
 			file = make(map[int]bool)

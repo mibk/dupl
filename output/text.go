@@ -12,7 +12,7 @@ type FileReader interface {
 }
 
 type Printer interface {
-	Print(dups []*syntax.Seq)
+	Print(dups [][]*syntax.Node)
 	Finish()
 }
 
@@ -29,16 +29,16 @@ func NewTextPrinter(w io.Writer, fr FileReader) *TextPrinter {
 	}
 }
 
-func (p *TextPrinter) Print(dups []*syntax.Seq) {
+func (p *TextPrinter) Print(dups [][]*syntax.Node) {
 	p.cnt++
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
 	for i, dup := range dups {
-		cnt := len(dup.Nodes)
+		cnt := len(dup)
 		if cnt == 0 {
 			panic("zero length dup")
 		}
-		nstart := dup.Nodes[0]
-		nend := dup.Nodes[cnt-1]
+		nstart := dup[0]
+		nend := dup[cnt-1]
 
 		file, err := p.freader.ReadFile(nstart)
 		if err != nil {

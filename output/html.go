@@ -31,16 +31,16 @@ func NewHtmlPrinter(w io.Writer, fr FileReader) *HtmlPrinter {
 	}
 }
 
-func (p *HtmlPrinter) Print(dups []*syntax.Seq) {
+func (p *HtmlPrinter) Print(dups [][]*syntax.Node) {
 	p.iota++
 	fmt.Fprintf(p.writer, "<h1>#%d found %d clones</h1>\n", p.iota, len(dups))
 	for _, dup := range dups {
-		cnt := len(dup.Nodes)
+		cnt := len(dup)
 		if cnt == 0 {
 			panic("zero length dup")
 		}
-		nstart := dup.Nodes[0]
-		nend := dup.Nodes[cnt-1]
+		nstart := dup[0]
+		nend := dup[cnt-1]
 
 		file, err := p.freader.ReadFile(nstart)
 		if err != nil {
