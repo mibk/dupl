@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"crypto/sha1"
-	"fmt"
 
 	"fm.tul.cz/dupl/suffixtree"
 )
@@ -142,25 +141,6 @@ func isCyclic(indexes []int, nodes []*Node) bool {
 	return true
 }
 
-func GetNodes(stree *suffixtree.STree, m suffixtree.Match) [][]*Node {
-	seqs := make([][]*Node, len(m.Ps))
-	for i, pos := range m.Ps {
-		seq := make([]*Node, m.Len)
-		for j := suffixtree.Pos(0); j < m.Len; j++ {
-			seq[j] = getNode(stree.At(pos + j))
-		}
-		seqs[i] = seq
-	}
-	return seqs
-}
-
-func getNode(tok suffixtree.Token) *Node {
-	if n, ok := tok.(*Node); ok {
-		return n
-	}
-	panic(fmt.Sprintf("tok (type %T)  is not type *Node", tok))
-}
-
 func hashSeq(nodes []*Node) string {
 	h := sha1.New()
 	bytes := make([]byte, len(nodes))
@@ -169,4 +149,13 @@ func hashSeq(nodes []*Node) string {
 	}
 	h.Write(bytes)
 	return string(h.Sum(nil))
+}
+
+// GetMatchNodes returns a slice of clones from the match using data nodes.
+func GetMatchNodes(data []*Node, m suffixtree.Match) [][]*Node {
+	seqs := make([][]*Node, len(m.Ps))
+	for i, pos := range m.Ps {
+		seqs[i] = data[pos : pos+m.Len]
+	}
+	return seqs
 }

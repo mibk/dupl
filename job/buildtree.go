@@ -5,16 +5,18 @@ import (
 	"fm.tul.cz/dupl/syntax"
 )
 
-func BuildTree(schan chan []*syntax.Node) (t *suffixtree.STree, done chan bool) {
+func BuildTree(schan chan []*syntax.Node) (t *suffixtree.STree, d *[]*syntax.Node, done chan bool) {
 	t = suffixtree.New()
+	data := make([]*syntax.Node, 0, 100)
 	done = make(chan bool)
 	go func() {
 		for seq := range schan {
+			data = append(data, seq...)
 			for _, node := range seq {
 				t.Update(node)
 			}
 		}
 		done <- true
 	}()
-	return t, done
+	return t, &data, done
 }

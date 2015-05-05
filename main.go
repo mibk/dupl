@@ -58,7 +58,7 @@ func main() {
 			log.Println("Building suffix tree")
 		}
 		schan := job.CrawlDir(dir)
-		t, done := job.BuildTree(schan)
+		t, data, done := job.BuildTree(schan)
 		<-done
 
 		// finish stream
@@ -71,7 +71,7 @@ func main() {
 		nodesChan := make(chan [][]*syntax.Node)
 		go func() {
 			for m := range mchan {
-				nodesChan <- syntax.GetNodes(t, m)
+				nodesChan <- syntax.GetMatchNodes(*data, m)
 			}
 			close(nodesChan)
 		}()

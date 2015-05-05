@@ -13,6 +13,7 @@ import (
 
 type Dupl struct {
 	stree    *suffixtree.STree
+	data     *[]*syntax.Node
 	schan    chan []*syntax.Node
 	mchan    <-chan suffixtree.Match
 	done     chan bool
@@ -36,7 +37,8 @@ func (d *Dupl) NextMatch(threshold int, r *Response) error {
 		d.mchan = d.stree.FindDuplOver(threshold)
 	}
 	m, ok := <-d.mchan
-	r.Match, r.Done = syntax.GetNodes(d.stree, m), !ok
+	r.Match = syntax.GetMatchNodes(*d.data, m)
+	r.Done = !ok
 	return nil
 }
 
@@ -62,7 +64,7 @@ func RunServer(port string) {
 			log.Println("connection accepted")
 			d.finished = false
 			d.schan = make(chan []*syntax.Node)
-			d.stree, d.done = job.BuildTree(d.schan)
+			d.stree, d.data, d.done = job.BuildTree(d.schan)
 
 			rpc.ServeConn(conn)
 			log.Println("done")
