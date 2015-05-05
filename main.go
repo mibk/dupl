@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"fm.tul.cz/dupl/job"
@@ -16,6 +17,7 @@ const DefaultThreshold = 15
 
 var (
 	dir        = "."
+	verbose    = flag.Bool("verbose", false, "explain what is being done")
 	threshold  = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
 	serverPort = flag.String("serve", "", "run server at port")
 	addrs      AddrList
@@ -34,6 +36,7 @@ func (l *AddrList) Set(val string) error {
 }
 
 func init() {
+	flag.BoolVar(verbose, "v", false, "alias for -verbose")
 	flag.IntVar(threshold, "t", DefaultThreshold, "alias for -threshold")
 	flag.Var(&addrs, "connect", "connect to the given 'addr:port'")
 	flag.Var(&addrs, "c", "alias for -connect")
@@ -51,6 +54,9 @@ func main() {
 	} else if *serverPort != "" {
 		remote.RunServer(*serverPort)
 	} else {
+		if *verbose {
+			log.Println("Building suffix tree")
+		}
 		schan := job.CrawlDir(dir)
 		t, done := job.BuildTree(schan)
 		<-done
@@ -58,6 +64,9 @@ func main() {
 		// finish stream
 		t.Update(&syntax.Node{Type: -1})
 
+		if *verbose {
+			log.Println("Searching for clones")
+		}
 		mchan := t.FindDuplOver(*threshold)
 		nodesChan := make(chan [][]*syntax.Node)
 		go func() {
