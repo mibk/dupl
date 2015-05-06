@@ -49,7 +49,7 @@ func main() {
 	}
 
 	if len(addrs) != 0 {
-		nodesChan := remote.RunClient(addrs, *threshold, dir)
+		nodesChan := remote.RunClient(addrs, *threshold, dir, *verbose)
 		printDupls(nodesChan)
 	} else if *serverPort != "" {
 		remote.RunServer(*serverPort)

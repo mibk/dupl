@@ -28,6 +28,7 @@ type worker struct {
 	clients  []*rpc.Client
 	router   *router
 	batchCnt int
+	verbose  bool
 }
 
 func newWorker(addrs []string) *worker {
@@ -62,6 +63,9 @@ func newWorker(addrs []string) *worker {
 }
 
 func (w *worker) Work(schan chan []*syntax.Node, duplChan chan syntax.Match, threshold int) {
+	if w.verbose {
+		log.Println("Servers are building suffix tree")
+	}
 	batch := 0
 	for seq := range schan {
 		for _, client := range w.router.Slots[batch] {
@@ -76,6 +80,9 @@ func (w *worker) Work(schan chan []*syntax.Node, duplChan chan syntax.Match, thr
 		batch = (batch + 1) % w.batchCnt
 	}
 
+	if w.verbose {
+		log.Println("Servers are searching for clones")
+	}
 	clientCnt := len(w.clients)
 	for _, client := range w.clients {
 		client := client
@@ -112,9 +119,12 @@ func batchCount(clientsCnt int) int {
 	return int(math.Ceil(math.Sqrt(2*float64(clientsCnt)+0.25) + 0.5))
 }
 
-func RunClient(addrs []string, threshold int, dir string) <-chan syntax.Match {
+func RunClient(addrs []string, threshold int, dir string, verbose bool) <-chan syntax.Match {
 	w := newWorker(addrs)
-	log.Println("connection established")
+	w.verbose = verbose
+	if verbose {
+		log.Println("Connections established")
+	}
 
 	schan := job.CrawlDir(dir)
 	duplChan := make(chan syntax.Match)
