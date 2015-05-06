@@ -87,14 +87,23 @@ func FindSyntaxUnits(data []*Node, m suffixtree.Match, threshold int) Match {
 }
 
 func getUnitsIndexes(nodeSeq []*Node, threshold int) []int {
-	indexes := make([]int, 0)
+	var indexes []int
+	var split bool
 	for i := 0; i < len(nodeSeq); {
 		n := nodeSeq[i]
-		if n.Owns >= len(nodeSeq)-i {
+		switch {
+		case n.Owns >= len(nodeSeq)-i:
 			// not complete syntax unit
 			i++
+			split = true
 			continue
-		} else if n.Owns+1 >= threshold {
+		case n.Owns+1 < threshold:
+			split = true
+		default:
+			if split {
+				indexes = indexes[:0]
+				split = false
+			}
 			indexes = append(indexes, i)
 		}
 		i += n.Owns + 1

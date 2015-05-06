@@ -49,7 +49,7 @@ func TestGetUnitsIndexes(t *testing.T) {
 		expected  []int
 	}{
 		{"a8 a0 a2 a0 a0", 3, []int{2}},
-		{"a0 a8 a2 a0 a0", 1, []int{0, 2}},
+		{"a0 a8 a2 a0 a0", 1, []int{2}},
 		{"a3 a0 a0 a0 a1", 3, []int{0}},
 		{"a3 a0 a0 a0 a0", 1, []int{0, 4}},
 		{"a1 a0 a1 a0 a0", 2, []int{0, 2}},
