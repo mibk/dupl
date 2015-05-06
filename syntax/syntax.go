@@ -69,7 +69,7 @@ func FindSyntaxUnits(data []*Node, m suffixtree.Match, threshold int) Match {
 			}
 		}
 	}
-	if len(indexes) == 0 || isCyclic(indexes, firstSeq) {
+	if len(indexes) == 0 || isCyclic(indexes, firstSeq) || spansMultipleFiles(indexes, firstSeq) {
 		return Match{}
 	}
 
@@ -149,6 +149,19 @@ func isCyclic(indexes []int, nodes []*Node) bool {
 		}
 	}
 	return true
+}
+
+func spansMultipleFiles(indexes []int, nodes []*Node) bool {
+	if len(indexes) < 2 {
+		return false
+	}
+	f := nodes[indexes[0]].Filename
+	for i := 1; i < len(indexes); i++ {
+		if nodes[indexes[i]].Filename != f {
+			return true
+		}
+	}
+	return false
 }
 
 func hashSeq(nodes []*Node) string {
