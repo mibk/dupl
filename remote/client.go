@@ -5,7 +5,6 @@ import (
 	"math"
 	"net/rpc"
 
-	"fm.tul.cz/dupl/job"
 	"fm.tul.cz/dupl/syntax"
 )
 
@@ -119,14 +118,13 @@ func batchCount(clientsCnt int) int {
 	return int(math.Ceil(math.Sqrt(2*float64(clientsCnt)+0.25) + 0.5))
 }
 
-func RunClient(addrs []string, threshold int, dir string, verbose bool) <-chan syntax.Match {
+func RunClient(addrs []string, threshold int, schan chan []*syntax.Node, verbose bool) <-chan syntax.Match {
 	w := newWorker(addrs)
 	w.verbose = verbose
 	if verbose {
 		log.Println("Connections established")
 	}
 
-	schan := job.CrawlDir(dir)
 	duplChan := make(chan syntax.Match)
 	go w.Work(schan, duplChan, threshold)
 

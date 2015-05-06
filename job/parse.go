@@ -2,27 +2,12 @@ package job
 
 import (
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"fm.tul.cz/dupl/syntax"
 	"fm.tul.cz/dupl/syntax/golang"
 )
 
-func CrawlDir(dir string) chan []*syntax.Node {
-
-	// collect files
-	fchan := make(chan string)
-	go func() {
-		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-			if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
-				fchan <- path
-			}
-			return nil
-		})
-		close(fchan)
-	}()
+func Parse(fchan chan string) chan []*syntax.Node {
 
 	// parse AST
 	achan := make(chan *syntax.Node)

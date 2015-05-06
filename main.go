@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"fm.tul.cz/dupl/job"
 	"fm.tul.cz/dupl/output"
@@ -22,6 +25,7 @@ var (
 	serverPort = flag.String("serve", "", "run server at port")
 	addrs      AddrList
 	html       = flag.Bool("html", false, "html output")
+	files      = flag.Bool("files", false, "files names from stdin")
 )
 
 type AddrList []string
@@ -49,7 +53,8 @@ func main() {
 	}
 
 	if len(addrs) != 0 {
-		nodesChan := remote.RunClient(addrs, *threshold, dir, *verbose)
+		schan := job.Parse(FilesFeed())
+		nodesChan := remote.RunClient(addrs, *threshold, schan, *verbose)
 		printDupls(nodesChan)
 	} else if *serverPort != "" {
 		remote.RunServer(*serverPort)
@@ -57,7 +62,7 @@ func main() {
 		if *verbose {
 			log.Println("Building suffix tree")
 		}
-		schan := job.CrawlDir(dir)
+		schan := job.Parse(FilesFeed())
 		t, data, done := job.BuildTree(schan)
 		<-done
 
@@ -80,6 +85,40 @@ func main() {
 		}()
 		printDupls(duplChan)
 	}
+}
+
+func FilesFeed() chan string {
+	if *files {
+		fchan := make(chan string)
+		go func() {
+			s := bufio.NewScanner(os.Stdin)
+			for s.Scan() {
+				f := s.Text()
+				if strings.HasPrefix(f, "./") {
+					f = f[2:]
+				}
+				fchan <- f
+			}
+			close(fchan)
+		}()
+		return fchan
+	}
+	return CrawlDir(dir)
+}
+
+func CrawlDir(dir string) chan string {
+	// collect files
+	fchan := make(chan string)
+	go func() {
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
+				fchan <- path
+			}
+			return nil
+		})
+		close(fchan)
+	}()
+	return fchan
 }
 
 type LocalFileReader struct{}
