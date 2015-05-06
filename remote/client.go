@@ -61,7 +61,7 @@ func newWorker(addrs []string) *worker {
 	return w
 }
 
-func (w *worker) Work(schan chan []*syntax.Node, nodesChan chan [][]*syntax.Node, threshold int) {
+func (w *worker) Work(schan chan []*syntax.Node, duplChan chan syntax.Match, threshold int) {
 	batch := 0
 	for seq := range schan {
 		for _, client := range w.router.Slots[batch] {
@@ -94,11 +94,13 @@ func (w *worker) Work(schan chan []*syntax.Node, nodesChan chan [][]*syntax.Node
 				if reply.Done {
 					clientCnt--
 					if clientCnt == 0 {
-						close(nodesChan)
+						close(duplChan)
 					}
 					return
 				}
-				nodesChan <- reply.Match
+				if len(reply.Match.Frags) > 0 {
+					duplChan <- reply.Match
+				}
 			}
 		}()
 	}
@@ -110,13 +112,13 @@ func batchCount(clientsCnt int) int {
 	return int(math.Ceil(math.Sqrt(2*float64(clientsCnt)+0.25) + 0.5))
 }
 
-func RunClient(addrs []string, threshold int, dir string) <-chan [][]*syntax.Node {
+func RunClient(addrs []string, threshold int, dir string) <-chan syntax.Match {
 	w := newWorker(addrs)
 	log.Println("connection established")
 
 	schan := job.CrawlDir(dir)
-	nodesChan := make(chan [][]*syntax.Node)
-	go w.Work(schan, nodesChan, threshold)
+	duplChan := make(chan syntax.Match)
+	go w.Work(schan, duplChan, threshold)
 
-	return nodesChan
+	return duplChan
 }

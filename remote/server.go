@@ -13,13 +13,14 @@ import (
 )
 
 type Dupl struct {
-	mu       *sync.Mutex
-	stree    *suffixtree.STree
-	data     *[]*syntax.Node
-	schan    chan []*syntax.Node
-	mchan    <-chan suffixtree.Match
-	done     chan bool
-	finished bool
+	mu        *sync.Mutex
+	stree     *suffixtree.STree
+	data      *[]*syntax.Node
+	threshold int
+	schan     chan []*syntax.Node
+	mchan     <-chan suffixtree.Match
+	done      chan bool
+	finished  bool
 }
 
 func (d *Dupl) UpdateTree(seq []*syntax.Node, ignore *bool) error {
@@ -43,6 +44,7 @@ func (d *Dupl) FinishAndSetThreshold(threshold int, ignore *bool) error {
 	<-d.done
 	d.stree.Update(&syntax.Node{Type: -1})
 	d.mchan = d.stree.FindDuplOver(threshold)
+	d.threshold = threshold
 	return nil
 }
 
@@ -53,13 +55,13 @@ func (d *Dupl) NextMatch(ignore bool, r *Response) error {
 		return errors.New("suffix tree is not finished yet")
 	}
 	m, ok := <-d.mchan
-	r.Match = syntax.GetMatchNodes(*d.data, m)
+	r.Match = syntax.FindSyntaxUnits(*d.data, m, d.threshold)
 	r.Done = !ok
 	return nil
 }
 
 type Response struct {
-	Match [][]*syntax.Node
+	Match syntax.Match
 	Done  bool
 }
 

@@ -26,6 +26,11 @@ func (n *Node) Val() int {
 	return n.Type
 }
 
+type Match struct {
+	Hash  string
+	Frags [][]*Node
+}
+
 func Serialize(n *Node) []*Node {
 	stream := make([]*Node, 0, 10)
 	serial(n, &stream)
@@ -44,37 +49,41 @@ func serial(n *Node, stream *[]*Node) int {
 
 // FindSyntaxUnits finds all complete syntax units in the match group and returns them
 // with the corresponding hash.
-func FindSyntaxUnits(nodeSeqs [][]*Node, threshold int) ([][]*Node, string) {
-	indexes := getUnitsIndexes(nodeSeqs[0], threshold)
+func FindSyntaxUnits(data []*Node, m suffixtree.Match, threshold int) Match {
+	if len(m.Ps) == 0 {
+		return Match{}
+	}
+	firstSeq := data[m.Ps[0] : m.Ps[0]+m.Len]
+	indexes := getUnitsIndexes(firstSeq, threshold)
 
 	// TODO: is this really working?
 	indexCnt := len(indexes)
 	if indexCnt > 0 {
 		lasti := indexes[indexCnt-1]
-		firstn := nodeSeqs[0][lasti]
-		for i := 1; i < len(nodeSeqs); i++ {
-			n := nodeSeqs[i][lasti]
+		firstn := firstSeq[lasti]
+		for i := 1; i < len(m.Ps); i++ {
+			n := data[int(m.Ps[i])+lasti]
 			if firstn.Owns != n.Owns {
 				indexes = indexes[:indexCnt-1]
 				break
 			}
 		}
 	}
-	if len(indexes) == 0 || isCyclic(indexes, nodeSeqs[0]) {
-		return make([][]*Node, 0), ""
+	if len(indexes) == 0 || isCyclic(indexes, firstSeq) {
+		return Match{}
 	}
-	seqs := make([][]*Node, len(nodeSeqs))
-	for i, nodes := range nodeSeqs {
-		seqs[i] = make([]*Node, len(indexes))
+
+	match := Match{Frags: make([][]*Node, len(m.Ps))}
+	for i, pos := range m.Ps {
+		match.Frags[i] = make([]*Node, len(indexes))
 		for j, index := range indexes {
-			seqs[i][j] = nodes[index]
+			match.Frags[i][j] = data[int(pos)+index]
 		}
 	}
 
 	lastIndex := indexes[len(indexes)-1]
-	firstSeq := nodeSeqs[0]
-	hash := hashSeq(firstSeq[indexes[0] : lastIndex+firstSeq[lastIndex].Owns])
-	return seqs, hash
+	match.Hash = hashSeq(firstSeq[indexes[0] : lastIndex+firstSeq[lastIndex].Owns])
+	return match
 }
 
 func getUnitsIndexes(nodeSeq []*Node, threshold int) []int {
@@ -141,13 +150,4 @@ func hashSeq(nodes []*Node) string {
 	}
 	h.Write(bytes)
 	return string(h.Sum(nil))
-}
-
-// GetMatchNodes returns a slice of clones from the match using data nodes.
-func GetMatchNodes(data []*Node, m suffixtree.Match) [][]*Node {
-	seqs := make([][]*Node, len(m.Ps))
-	for i, pos := range m.Ps {
-		seqs[i] = data[pos : pos+m.Len]
-	}
-	return seqs
 }

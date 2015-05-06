@@ -68,14 +68,17 @@ func main() {
 			log.Println("Searching for clones")
 		}
 		mchan := t.FindDuplOver(*threshold)
-		nodesChan := make(chan [][]*syntax.Node)
+		duplChan := make(chan syntax.Match)
 		go func() {
 			for m := range mchan {
-				nodesChan <- syntax.GetMatchNodes(*data, m)
+				match := syntax.FindSyntaxUnits(*data, m, *threshold)
+				if len(match.Frags) > 0 {
+					duplChan <- match
+				}
 			}
-			close(nodesChan)
+			close(duplChan)
 		}()
-		printDupls(nodesChan)
+		printDupls(duplChan)
 	}
 }
 
@@ -85,15 +88,14 @@ func (r *LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
 	return ioutil.ReadFile(node.Filename)
 }
 
-func printDupls(nodesChan <-chan [][]*syntax.Node) {
+func printDupls(duplChan <-chan syntax.Match) {
 	groups := make(map[string][][]*syntax.Node)
-	for seqs := range nodesChan {
-		if dups, hash := syntax.FindSyntaxUnits(seqs, *threshold); len(dups) != 0 {
-			if _, ok := groups[hash]; ok {
-				groups[hash] = append(groups[hash], dups...)
-			} else {
-				groups[hash] = dups
-			}
+	for dupl := range duplChan {
+		hash := dupl.Hash
+		if _, ok := groups[hash]; ok {
+			groups[hash] = append(groups[hash], dupl.Frags...)
+		} else {
+			groups[hash] = dupl.Frags
 		}
 	}
 
@@ -104,7 +106,6 @@ func printDupls(nodesChan <-chan [][]*syntax.Node) {
 			p.Print(uniq)
 		}
 	}
-
 	p.Finish()
 }
 
