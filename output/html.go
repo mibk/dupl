@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 
 	"fm.tul.cz/dupl/syntax"
 )
@@ -34,7 +35,9 @@ func NewHtmlPrinter(w io.Writer, fr FileReader) *HtmlPrinter {
 func (p *HtmlPrinter) Print(dups [][]*syntax.Node) {
 	p.iota++
 	fmt.Fprintf(p.writer, "<h1>#%d found %d clones</h1>\n", p.iota, len(dups))
-	for _, dup := range dups {
+
+	clones := make([]clone, len(dups))
+	for i, dup := range dups {
 		cnt := len(dup)
 		if cnt == 0 {
 			panic("zero length dup")
@@ -46,15 +49,22 @@ func (p *HtmlPrinter) Print(dups [][]*syntax.Node) {
 		if err != nil {
 			panic(err)
 		}
+
 		lineStart, _ := blockLines(file, nstart.Pos, nend.End)
-		fmt.Fprintf(p.writer, "<h2>%s:%d</h2>\n", nstart.Filename, lineStart)
+		cl := clone{filename: nstart.Filename, lineStart: lineStart}
 		start := findLineBeg(file, nstart.Pos)
 		content := append(toWhitespace(file[start:nstart.Pos]), file[nstart.Pos:nend.End]...)
-		fmt.Fprintf(p.writer, "<pre>%s</pre>\n", deindent(content))
+		cl.fragment = deindent(content)
+		clones[i] = cl
+	}
+
+	sort.Sort(byNameAndLine(clones))
+	for _, cl := range clones {
+		fmt.Fprintf(p.writer, "<h2>%s:%d</h2>\n<pre>%s</pre>\n", cl.filename, cl.lineStart, cl.fragment)
 	}
 }
 
-func (p *HtmlPrinter) Finish() {}
+func (*HtmlPrinter) Finish() {}
 
 func findLineBeg(file []byte, index int) int {
 	for i := index; i >= 0; i-- {

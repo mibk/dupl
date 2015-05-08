@@ -3,6 +3,7 @@ package output
 import (
 	"fmt"
 	"io"
+	"sort"
 
 	"fm.tul.cz/dupl/syntax"
 )
@@ -32,6 +33,8 @@ func NewTextPrinter(w io.Writer, fr FileReader) *TextPrinter {
 func (p *TextPrinter) Print(dups [][]*syntax.Node) {
 	p.cnt++
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
+
+	clones := make([]clone, len(dups))
 	for i, dup := range dups {
 		cnt := len(dup)
 		if cnt == 0 {
@@ -45,8 +48,14 @@ func (p *TextPrinter) Print(dups [][]*syntax.Node) {
 			panic(err)
 		}
 
-		lstart, lend := blockLines(file, nstart.Pos, nend.End)
-		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, nstart.Filename, lstart, lend)
+		cl := clone{filename: nstart.Filename}
+		cl.lineStart, cl.lineEnd = blockLines(file, nstart.Pos, nend.End)
+		clones[i] = cl
+	}
+
+	sort.Sort(byNameAndLine(clones))
+	for i, cl := range clones {
+		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, cl.filename, cl.lineStart, cl.lineEnd)
 	}
 }
 
@@ -70,4 +79,24 @@ func blockLines(file []byte, from, to int) (int, int) {
 		}
 	}
 	return lineStart, lineEnd
+}
+
+type clone struct {
+	filename  string
+	lineStart int
+	lineEnd   int
+	fragment  []byte
+}
+
+type byNameAndLine []clone
+
+func (c byNameAndLine) Len() int { return len(c) }
+
+func (c byNameAndLine) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
+
+func (c byNameAndLine) Less(i, j int) bool {
+	if c[i].filename == c[j].filename {
+		return c[i].lineStart < c[j].lineStart
+	}
+	return c[i].filename < c[j].filename
 }
