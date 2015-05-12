@@ -104,9 +104,7 @@ func (w *worker) Work(schan chan []*syntax.Node, duplChan chan syntax.Match, thr
 					}
 					return
 				}
-				if len(reply.Match.Frags) > 0 {
-					duplChan <- reply.Match
-				}
+				duplChan <- reply.Match
 			}
 		}()
 	}

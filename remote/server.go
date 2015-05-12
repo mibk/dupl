@@ -54,10 +54,17 @@ func (d *Dupl) NextMatch(ignore bool, r *Response) error {
 	if !d.finished {
 		return errors.New("suffix tree is not finished yet")
 	}
-	m, ok := <-d.mchan
-	r.Match = syntax.FindSyntaxUnits(*d.data, m, d.threshold)
-	r.Done = !ok
-	return nil
+	for {
+		m, ok := <-d.mchan
+		if ok {
+			r.Match = syntax.FindSyntaxUnits(*d.data, m, d.threshold)
+			if len(r.Match.Frags) == 0 {
+				continue
+			}
+		}
+		r.Done = !ok
+		return nil
+	}
 }
 
 type Response struct {
