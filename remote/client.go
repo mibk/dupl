@@ -4,6 +4,7 @@ import (
 	"log"
 	"math"
 	"net/rpc"
+	"sync"
 
 	"fm.tul.cz/dupl/syntax"
 )
@@ -66,10 +67,13 @@ func (w *worker) Work(schan chan []*syntax.Node, duplChan chan syntax.Match, thr
 		log.Println("Servers are building suffix tree")
 	}
 	batch := 0
+	var wg sync.WaitGroup
 	for seq := range schan {
 		for _, client := range w.router.Slots[batch] {
 			seq, client := seq, client
+			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				err := client.Call("Dupl.UpdateTree", seq, nil)
 				if err != nil {
 					log.Fatal(err)
@@ -79,6 +83,7 @@ func (w *worker) Work(schan chan []*syntax.Node, duplChan chan syntax.Match, thr
 		batch = (batch + 1) % w.batchCnt
 	}
 
+	wg.Wait()
 	if w.verbose {
 		log.Println("Servers are searching for clones")
 	}

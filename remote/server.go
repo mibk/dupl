@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-	"sync"
 
 	"fm.tul.cz/dupl/job"
 	"fm.tul.cz/dupl/suffixtree"
@@ -13,7 +12,6 @@ import (
 )
 
 type Dupl struct {
-	mu        *sync.Mutex
 	stree     *suffixtree.STree
 	data      *[]*syntax.Node
 	threshold int
@@ -24,8 +22,6 @@ type Dupl struct {
 }
 
 func (d *Dupl) UpdateTree(seq []*syntax.Node, ignore *bool) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
 	if d.finished {
 		return errors.New("suffix tree has been finished")
 	}
@@ -34,8 +30,6 @@ func (d *Dupl) UpdateTree(seq []*syntax.Node, ignore *bool) error {
 }
 
 func (d *Dupl) FinishAndSetThreshold(threshold int, ignore *bool) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
 	if d.finished {
 		return errors.New("suffix tree has been already finished")
 	}
@@ -49,8 +43,6 @@ func (d *Dupl) FinishAndSetThreshold(threshold int, ignore *bool) error {
 }
 
 func (d *Dupl) NextMatch(ignore bool, r *Response) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
 	if !d.finished {
 		return errors.New("suffix tree is not finished yet")
 	}
@@ -88,7 +80,6 @@ func RunServer(port string) {
 		} else {
 			log.Println("connection accepted")
 			d.finished = false
-			d.mu = new(sync.Mutex)
 			d.schan = make(chan []*syntax.Node)
 			d.stree, d.data, d.done = job.BuildTree(d.schan)
 
