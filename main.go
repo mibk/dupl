@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"fm.tul.cz/dupl/job"
-	"fm.tul.cz/dupl/output"
-	"fm.tul.cz/dupl/remote"
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/job"
+	"github.com/mibk/dupl/output"
+	"github.com/mibk/dupl/remote"
+	"github.com/mibk/dupl/syntax"
 )
 
 const DefaultThreshold = 15

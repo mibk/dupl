@@ -6,9 +6,9 @@ import (
 	"net"
 	"net/rpc"
 
-	"fm.tul.cz/dupl/job"
-	"fm.tul.cz/dupl/suffixtree"
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/job"
+	"github.com/mibk/dupl/suffixtree"
+	"github.com/mibk/dupl/syntax"
 )
 
 type Dupl struct {

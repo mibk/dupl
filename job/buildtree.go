@@ -1,8 +1,8 @@
 package job
 
 import (
-	"fm.tul.cz/dupl/suffixtree"
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/suffixtree"
+	"github.com/mibk/dupl/syntax"
 )
 
 func BuildTree(schan chan []*syntax.Node) (t *suffixtree.STree, d *[]*syntax.Node, done chan bool) {

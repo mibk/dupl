@@ -6,7 +6,7 @@ import (
 	"net/rpc"
 	"sync"
 
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/syntax"
 )
 
 type router struct {

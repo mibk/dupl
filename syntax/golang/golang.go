@@ -5,7 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/syntax"
 )
 
 const (

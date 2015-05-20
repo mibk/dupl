@@ -5,7 +5,7 @@ import (
 	"io"
 	"sort"
 
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/syntax"
 )
 
 type FileReader interface {

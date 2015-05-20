@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"sort"
 
-	"fm.tul.cz/dupl/syntax"
+	"github.com/mibk/dupl/syntax"
 )
 
 type HtmlPrinter struct {
