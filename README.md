@@ -4,6 +4,12 @@
 in the Go source files. The method uses suffix tree for serialized ASTs. It ignores values
 of AST nodes, it cares just about the types.
 
+## Installation
+
+```bash
+go get -u github.com/mibk/dupl
+```
+
 ## Usage
 
 It searches in a current directory by default (can be changed using the first argument).
@@ -17,6 +23,6 @@ flag the output could turn into HTML page with duplicate code fragments.
 The reduced output of this command with the following parameters for the [Docker](https://www.docker.com) source code
 looks like [this](http://htmlpreview.github.io/?https://github.com/mibk/dupl/blob/master/_output_example/docker.html).
 
-```
+```bash
 $ dupl -t 200 -html >docker.html
 ```
