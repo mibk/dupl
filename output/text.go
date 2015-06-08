@@ -35,8 +35,8 @@ func (p *TextPrinter) Print(dups [][]*syntax.Node) {
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
 	clones := p.prepareClonesInfo(dups)
 	sort.Sort(byNameAndLine(clones))
-	for i, cl := range clones {
-		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, cl.filename, cl.lineStart, cl.lineEnd)
+	for _, cl := range clones {
+		fmt.Fprintf(p.writer, "  %s:%d,%d\n", cl.filename, cl.lineStart, cl.lineEnd)
 	}
 }
 
