@@ -24,8 +24,10 @@ var (
 	threshold  = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
 	serverPort = flag.String("serve", "", "run server at port")
 	addrs      AddrList
-	html       = flag.Bool("html", false, "html output")
 	files      = flag.Bool("files", false, "files names from stdin")
+
+	html     = flag.Bool("html", false, "html output")
+	plumbing = flag.Bool("plumbing", false, "plumbing output for consumption by scripts or tools")
 )
 
 type AddrList []string
@@ -48,6 +50,9 @@ func init() {
 
 func main() {
 	flag.Parse()
+	if *html && *plumbing {
+		log.Fatal("you can have either plumbing or HTML output")
+	}
 	if flag.NArg() > 0 {
 		dir = flag.Arg(0)
 	}
@@ -152,6 +157,8 @@ func getPrinter() output.Printer {
 	fr := new(LocalFileReader)
 	if *html {
 		return output.NewHtmlPrinter(os.Stdout, fr)
+	} else if *plumbing {
+		return output.NewPlumbingPrinter(os.Stdout, fr)
 	}
 	return output.NewTextPrinter(os.Stdout, fr)
 }
