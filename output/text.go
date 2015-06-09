@@ -33,7 +33,14 @@ func NewTextPrinter(w io.Writer, fr FileReader) *TextPrinter {
 func (p *TextPrinter) Print(dups [][]*syntax.Node) {
 	p.cnt++
 	fmt.Fprintf(p.writer, "found %d clones:\n", len(dups))
+	clones := p.prepareClonesInfo(dups)
+	sort.Sort(byNameAndLine(clones))
+	for i, cl := range clones {
+		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, cl.filename, cl.lineStart, cl.lineEnd)
+	}
+}
 
+func (p *TextPrinter) prepareClonesInfo(dups [][]*syntax.Node) []clone {
 	clones := make([]clone, len(dups))
 	for i, dup := range dups {
 		cnt := len(dup)
@@ -52,11 +59,7 @@ func (p *TextPrinter) Print(dups [][]*syntax.Node) {
 		cl.lineStart, cl.lineEnd = blockLines(file, nstart.Pos, nend.End)
 		clones[i] = cl
 	}
-
-	sort.Sort(byNameAndLine(clones))
-	for i, cl := range clones {
-		fmt.Fprintf(p.writer, "  loc %d: %s, line %d-%d,\n", i+1, cl.filename, cl.lineStart, cl.lineEnd)
-	}
+	return clones
 }
 
 func (p *TextPrinter) Finish() {
