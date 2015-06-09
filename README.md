@@ -12,11 +12,13 @@ go get -u github.com/mibk/dupl
 
 ## Usage
 
-It searches in a current directory by default (can be changed using the first argument).
-Using `-files` flag it is possible to specify coveted files which are read from *stdin*.
-The `-t` flag is used to set a minimal clone size measured in syntax units (default is 15).
-The default output is just text information about duplicate line ranges in files. Using `-html`
-flag the output could turn into HTML page with duplicate code fragments.
+`dupl` searches in a current directory by default (can be changed using the first argument).
+The output is plaintext about duplicate line ranges in files.
+
+### Flags
+- `-files`: read input from *stdin* instead of the current directory.
+- `-t size`: set the clone size threshold, measured in syntax units. Default is equivalent to `-t 15`.
+- `-html`: output the results as HTML, including duplicate code fragments.
 
 ## Example
 
