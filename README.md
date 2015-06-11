@@ -19,6 +19,7 @@ The output is plaintext about duplicate line ranges in files.
 - `-files`: read input from *stdin* instead of the current directory.
 - `-t size`: set the clone size threshold, measured in syntax units. Default is equivalent to `-t 15`.
 - `-html`: output the results as HTML, including duplicate code fragments.
+- `-plumbing`: output in an easy-to-parse format for scripts or tools.
 
 ## Example
 
