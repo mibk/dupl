@@ -48,7 +48,47 @@ func init() {
 	flag.Var(&addrs, "c", "alias for -connect")
 }
 
+func usage() {
+	fmt.Fprintln(os.Stderr, `Usage of dupl:
+  dupl [flags] [paths]
+
+Paths:
+  If the given path is a file, dupl will use it regardless of
+  the file extension. If it is a directory it will recursively
+  search for *.go files in that directory.
+
+  If no path is given dupl will recursively search for *.go
+  files in the current directory.
+
+Flags:
+  -c, -connect addr:port
+    	connect to the given 'addr:port'
+  -files
+    	read file names from stdin one at each line
+  -html
+    	output the results as HTML, including duplicate code fragments
+  -plumbing
+    	plumbing (easy-to-parse) output for consumption by scripts or tools
+  -serve port
+    	run server at port
+  -t, -threshold size
+    	minimum token sequence size as a clone (default 15)
+  -v, -verbose
+    	explain what is being done
+
+Examples:
+  dupl -t 100
+    	Search clones in the current directory of size at least
+    	100 tokens.
+  dupl $(find app/ -name '*_test.go')
+    	Search for clones in tests in the app directory.
+  find app/ -name '*_test.go' |dupl -files
+    	The same as above.`)
+	os.Exit(2)
+}
+
 func main() {
+	flag.Usage = usage
 	flag.Parse()
 	if *html && *plumbing {
 		log.Fatal("you can have either plumbing or HTML output")

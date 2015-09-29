@@ -12,14 +12,43 @@ go get -u github.com/mibk/dupl
 
 ## Usage
 
-`dupl` searches in a current directory by default (can be changed using the first argument).
-The output is plaintext about duplicate line ranges in files.
+```
+Usage of dupl:
+  dupl [flags] [paths]
 
-### Flags
-- `-files`: read input from *stdin* instead of the current directory.
-- `-t size`: set the clone size threshold, measured in syntax units. Default is equivalent to `-t 15`.
-- `-html`: output the results as HTML, including duplicate code fragments.
-- `-plumbing`: output in an easy-to-parse format for scripts or tools.
+Paths:
+  If the given path is a file, dupl will use it regardless of
+  the file extension. If it is a directory it will recursively
+  search for *.go files in that directory.
+
+  If no path is given dupl will recursively search for *.go
+  files in the current directory.
+
+Flags:
+  -c, -connect addr:port
+        connect to the given 'addr:port'
+  -files
+        read file names from stdin one at each line
+  -html
+        output the results as HTML, including duplicate code fragments
+  -plumbing
+        plumbing (easy-to-parse) output for consumption by scripts or tools
+  -serve port
+        run server at port
+  -t, -threshold size
+        minimum token sequence size as a clone (default 15)
+  -v, -verbose
+        explain what is being done
+
+Examples:
+  dupl -t 100
+        Search clones in the current directory of size at least
+        100 tokens.
+  dupl $(find app/ -name '*_test.go')
+        Search for clones in tests in the app directory.
+  find app/ -name '*_test.go' |dupl -files
+        The same as above.
+```
 
 ## Example
 
