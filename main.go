@@ -19,7 +19,7 @@ import (
 const DefaultThreshold = 15
 
 var (
-	dir        = "."
+	paths      = []string{"."}
 	verbose    = flag.Bool("verbose", false, "explain what is being done")
 	threshold  = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
 	serverPort = flag.String("serve", "", "run server at port")
@@ -54,7 +54,7 @@ func main() {
 		log.Fatal("you can have either plumbing or HTML output")
 	}
 	if flag.NArg() > 0 {
-		dir = flag.Arg(0)
+		paths = flag.Args()
 	}
 
 	if len(addrs) != 0 {
@@ -108,19 +108,28 @@ func FilesFeed() chan string {
 		}()
 		return fchan
 	}
-	return CrawlDir(dir)
+	return CrawlPaths(paths)
 }
 
-func CrawlDir(dir string) chan string {
-	// collect files
+func CrawlPaths(paths []string) chan string {
 	fchan := make(chan string)
 	go func() {
-		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-			if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
-				fchan <- path
+		for _, path := range paths {
+			info, err := os.Lstat(path)
+			if err != nil {
+				panic(err)
 			}
-			return nil
-		})
+			if !info.IsDir() {
+				fchan <- path
+				continue
+			}
+			filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+				if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
+					fchan <- path
+				}
+				return nil
+			})
+		}
 		close(fchan)
 	}()
 	return fchan
