@@ -10,6 +10,8 @@ of AST nodes, it cares just about the types.
 go get -u github.com/mibk/dupl
 ```
 
+To be built, dupl requires Go 1.4 or later.
+
 ## Usage
 
 ```
