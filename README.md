@@ -1,4 +1,4 @@
-# dupl
+# dupl [![Build Status](https://travis-ci.org/mibk/dupl.png)](https://travis-ci.org/mibk/dupl)
 
 **dupl** is a tool for finding code clones written in Go. So far it can find clones only
 in the Go source files. The method uses suffix tree for serialized ASTs. It ignores values
