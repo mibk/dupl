@@ -20,6 +20,7 @@ const DefaultThreshold = 15
 
 var (
 	paths      = []string{"."}
+	vendor     = flag.Bool("vendor", false, "check files in vendor directory")
 	verbose    = flag.Bool("verbose", false, "explain what is being done")
 	threshold  = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
 	serverPort = flag.String("serve", "", "run server at port")
@@ -28,6 +29,11 @@ var (
 
 	html     = flag.Bool("html", false, "html output")
 	plumbing = flag.Bool("plumbing", false, "plumbing output for consumption by scripts or tools")
+)
+
+const (
+	vendorDirPrefix = "vendor" + string(filepath.Separator)
+	vendorDirInPath = string(filepath.Separator) + "vendor" + string(filepath.Separator)
 )
 
 type AddrList []string
@@ -73,6 +79,8 @@ Flags:
     	run server at port
   -t, -threshold size
     	minimum token sequence size as a clone (default 15)
+  -vendor
+    	check files in vendor directory
   -v, -verbose
     	explain what is being done
 
@@ -164,6 +172,10 @@ func CrawlPaths(paths []string) chan string {
 				continue
 			}
 			filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+				if !*vendor && (strings.HasPrefix(path, vendorDirPrefix) ||
+					strings.Contains(path, vendorDirInPath)) {
+					return nil
+				}
 				if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
 					fchan <- path
 				}
