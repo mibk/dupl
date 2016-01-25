@@ -37,6 +37,8 @@ Flags:
         run server at port
   -t, -threshold size
         minimum token sequence size as a clone (default 15)
+  -vendor
+      check files in vendor directory
   -v, -verbose
         explain what is being done
 
