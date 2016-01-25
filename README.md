@@ -4,6 +4,10 @@
 in the Go source files. The method uses suffix tree for serialized ASTs. It ignores values
 of AST nodes, it cares just about the types.
 
+Due to the used method dupl can report so called "false positives" on the output. These are
+the ones we do not consider clones (whether they are to small, or the values of the matched
+tokens are completely different).
+
 ## Installation
 
 ```bash
@@ -38,7 +42,7 @@ Flags:
   -t, -threshold size
         minimum token sequence size as a clone (default 15)
   -vendor
-      check files in vendor directory
+        check files in vendor directory
   -v, -verbose
         explain what is being done
 
