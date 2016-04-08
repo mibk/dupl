@@ -12,20 +12,17 @@ import (
 
 	"github.com/mibk/dupl/job"
 	"github.com/mibk/dupl/output"
-	"github.com/mibk/dupl/remote"
 	"github.com/mibk/dupl/syntax"
 )
 
 const DefaultThreshold = 15
 
 var (
-	paths      = []string{"."}
-	vendor     = flag.Bool("vendor", false, "check files in vendor directory")
-	verbose    = flag.Bool("verbose", false, "explain what is being done")
-	threshold  = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
-	serverPort = flag.String("serve", "", "run server at port")
-	addrs      AddrList
-	files      = flag.Bool("files", false, "files names from stdin")
+	paths     = []string{"."}
+	vendor    = flag.Bool("vendor", false, "check files in vendor directory")
+	verbose   = flag.Bool("verbose", false, "explain what is being done")
+	threshold = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
+	files     = flag.Bool("files", false, "files names from stdin")
 
 	html     = flag.Bool("html", false, "html output")
 	plumbing = flag.Bool("plumbing", false, "plumbing output for consumption by scripts or tools")
@@ -36,22 +33,9 @@ const (
 	vendorDirInPath = string(filepath.Separator) + "vendor" + string(filepath.Separator)
 )
 
-type AddrList []string
-
-func (l *AddrList) String() string {
-	return fmt.Sprintf("%v", *l)
-}
-
-func (l *AddrList) Set(val string) error {
-	*l = append(*l, val)
-	return nil
-}
-
 func init() {
 	flag.BoolVar(verbose, "v", false, "alias for -verbose")
 	flag.IntVar(threshold, "t", DefaultThreshold, "alias for -threshold")
-	flag.Var(&addrs, "connect", "connect to the given 'addr:port'")
-	flag.Var(&addrs, "c", "alias for -connect")
 }
 
 func usage() {
@@ -67,16 +51,12 @@ Paths:
   files in the current directory.
 
 Flags:
-  -c, -connect addr:port
-    	connect to the given 'addr:port'
   -files
     	read file names from stdin one at each line
   -html
     	output the results as HTML, including duplicate code fragments
   -plumbing
     	plumbing (easy-to-parse) output for consumption by scripts or tools
-  -serve port
-    	run server at port
   -t, -threshold size
     	minimum token sequence size as a clone (default 15)
   -vendor
@@ -105,39 +85,31 @@ func main() {
 		paths = flag.Args()
 	}
 
-	if len(addrs) != 0 {
-		schan := job.Parse(FilesFeed())
-		nodesChan := remote.RunClient(addrs, *threshold, schan, *verbose)
-		printDupls(nodesChan)
-	} else if *serverPort != "" {
-		remote.RunServer(*serverPort)
-	} else {
-		if *verbose {
-			log.Println("Building suffix tree")
-		}
-		schan := job.Parse(FilesFeed())
-		t, data, done := job.BuildTree(schan)
-		<-done
-
-		// finish stream
-		t.Update(&syntax.Node{Type: -1})
-
-		if *verbose {
-			log.Println("Searching for clones")
-		}
-		mchan := t.FindDuplOver(*threshold)
-		duplChan := make(chan syntax.Match)
-		go func() {
-			for m := range mchan {
-				match := syntax.FindSyntaxUnits(*data, m, *threshold)
-				if len(match.Frags) > 0 {
-					duplChan <- match
-				}
-			}
-			close(duplChan)
-		}()
-		printDupls(duplChan)
+	if *verbose {
+		log.Println("Building suffix tree")
 	}
+	schan := job.Parse(FilesFeed())
+	t, data, done := job.BuildTree(schan)
+	<-done
+
+	// finish stream
+	t.Update(&syntax.Node{Type: -1})
+
+	if *verbose {
+		log.Println("Searching for clones")
+	}
+	mchan := t.FindDuplOver(*threshold)
+	duplChan := make(chan syntax.Match)
+	go func() {
+		for m := range mchan {
+			match := syntax.FindSyntaxUnits(*data, m, *threshold)
+			if len(match.Frags) > 0 {
+				duplChan <- match
+			}
+		}
+		close(duplChan)
+	}()
+	printDupls(duplChan)
 }
 
 func FilesFeed() chan string {

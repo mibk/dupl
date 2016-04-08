@@ -29,16 +29,12 @@ Paths:
   files in the current directory.
 
 Flags:
-  -c, -connect addr:port
-        connect to the given 'addr:port'
   -files
         read file names from stdin one at each line
   -html
         output the results as HTML, including duplicate code fragments
   -plumbing
         plumbing (easy-to-parse) output for consumption by scripts or tools
-  -serve port
-        run server at port
   -t, -threshold size
         minimum token sequence size as a clone (default 15)
   -vendor
