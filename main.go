@@ -15,13 +15,13 @@ import (
 	"github.com/mibk/dupl/syntax"
 )
 
-const DefaultThreshold = 15
+const defaultThreshold = 15
 
 var (
 	paths     = []string{"."}
 	vendor    = flag.Bool("vendor", false, "check files in vendor directory")
 	verbose   = flag.Bool("verbose", false, "explain what is being done")
-	threshold = flag.Int("threshold", DefaultThreshold, "minimum token sequence as a clone")
+	threshold = flag.Int("threshold", defaultThreshold, "minimum token sequence as a clone")
 	files     = flag.Bool("files", false, "files names from stdin")
 
 	html     = flag.Bool("html", false, "html output")
@@ -35,7 +35,7 @@ const (
 
 func init() {
 	flag.BoolVar(verbose, "v", false, "alias for -verbose")
-	flag.IntVar(threshold, "t", DefaultThreshold, "alias for -threshold")
+	flag.IntVar(threshold, "t", defaultThreshold, "alias for -threshold")
 }
 
 func usage() {
@@ -88,7 +88,7 @@ func main() {
 	if *verbose {
 		log.Println("Building suffix tree")
 	}
-	schan := job.Parse(FilesFeed())
+	schan := job.Parse(filesFeed())
 	t, data, done := job.BuildTree(schan)
 	<-done
 
@@ -112,7 +112,7 @@ func main() {
 	printDupls(duplChan)
 }
 
-func FilesFeed() chan string {
+func filesFeed() chan string {
 	if *files {
 		fchan := make(chan string)
 		go func() {
@@ -128,10 +128,10 @@ func FilesFeed() chan string {
 		}()
 		return fchan
 	}
-	return CrawlPaths(paths)
+	return crawlPaths(paths)
 }
 
-func CrawlPaths(paths []string) chan string {
+func crawlPaths(paths []string) chan string {
 	fchan := make(chan string)
 	go func() {
 		for _, path := range paths {
@@ -161,7 +161,7 @@ func CrawlPaths(paths []string) chan string {
 
 type LocalFileReader struct{}
 
-func (r *LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
+func (LocalFileReader) ReadFile(node *syntax.Node) ([]byte, error) {
 	return ioutil.ReadFile(node.Filename)
 }
 
@@ -178,7 +178,7 @@ func printDupls(duplChan <-chan syntax.Match) {
 
 	p := getPrinter()
 	for _, group := range groups {
-		uniq := Unique(group)
+		uniq := unique(group)
 		if len(uniq) != 1 {
 			p.Print(uniq)
 		}
@@ -187,7 +187,7 @@ func printDupls(duplChan <-chan syntax.Match) {
 }
 
 func getPrinter() output.Printer {
-	fr := new(LocalFileReader)
+	fr := LocalFileReader{}
 	if *html {
 		return output.NewHtmlPrinter(os.Stdout, fr)
 	} else if *plumbing {
@@ -196,10 +196,10 @@ func getPrinter() output.Printer {
 	return output.NewTextPrinter(os.Stdout, fr)
 }
 
-func Unique(group [][]*syntax.Node) [][]*syntax.Node {
+func unique(group [][]*syntax.Node) [][]*syntax.Node {
 	fileMap := make(map[string]map[int]bool)
 
-	newGroup := make([][]*syntax.Node, 0)
+	var newGroup [][]*syntax.Node
 	for _, seq := range group {
 		node := seq[0]
 		file, ok := fileMap[node.Filename]

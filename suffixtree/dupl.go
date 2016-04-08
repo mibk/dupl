@@ -30,7 +30,7 @@ func newContextList() *contextList {
 }
 
 func (c *contextList) getAll() []Pos {
-	ps := make([]Pos, 0)
+	var ps []Pos
 	for _, pl := range c.lists {
 		ps = append(ps, pl.positions...)
 	}
