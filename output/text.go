@@ -9,7 +9,7 @@ import (
 )
 
 type FileReader interface {
-	ReadFile(node *syntax.Node) ([]byte, error)
+	ReadFile(filename string) ([]byte, error)
 }
 
 type Printer interface {
@@ -50,7 +50,7 @@ func (p *TextPrinter) prepareClonesInfo(dups [][]*syntax.Node) []clone {
 		nstart := dup[0]
 		nend := dup[cnt-1]
 
-		file, err := p.freader.ReadFile(nstart)
+		file, err := p.freader.ReadFile(nstart.Filename)
 		if err != nil {
 			panic(err)
 		}
