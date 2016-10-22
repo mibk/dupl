@@ -32,7 +32,7 @@ func NewHTMLPrinter(w io.Writer, fr FileReader) *HTMLPrinter {
 	}
 }
 
-func (p *HTMLPrinter) Print(dups [][]*syntax.Node) {
+func (p *HTMLPrinter) Print(dups [][]*syntax.Node) error {
 	p.iota++
 	fmt.Fprintf(p.writer, "<h1>#%d found %d clones</h1>\n", p.iota, len(dups))
 
@@ -47,7 +47,7 @@ func (p *HTMLPrinter) Print(dups [][]*syntax.Node) {
 
 		file, err := p.freader.ReadFile(nstart.Filename)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		lineStart, _ := blockLines(file, nstart.Pos, nend.End)
@@ -62,6 +62,7 @@ func (p *HTMLPrinter) Print(dups [][]*syntax.Node) {
 	for _, cl := range clones {
 		fmt.Fprintf(p.writer, "<h2>%s:%d</h2>\n<pre>%s</pre>\n", cl.filename, cl.lineStart, cl.fragment)
 	}
+	return nil
 }
 
 func (*HTMLPrinter) Finish() {}

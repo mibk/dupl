@@ -138,7 +138,7 @@ func crawlPaths(paths []string) chan string {
 		for _, path := range paths {
 			info, err := os.Lstat(path)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 			if !info.IsDir() {
 				fchan <- path
@@ -175,7 +175,9 @@ func printDupls(duplChan <-chan syntax.Match) {
 	for _, k := range keys {
 		uniq := unique(groups[k])
 		if len(uniq) > 1 {
-			p.Print(uniq)
+			if err := p.Print(uniq); err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 	p.Finish()
