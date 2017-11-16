@@ -83,10 +83,7 @@ func filesFeed() chan string {
 			s := bufio.NewScanner(os.Stdin)
 			for s.Scan() {
 				f := s.Text()
-				if strings.HasPrefix(f, "./") {
-					f = f[2:]
-				}
-				fchan <- f
+				fchan <- strings.TrimPrefix(f, "./")
 			}
 			close(fchan)
 		}()
