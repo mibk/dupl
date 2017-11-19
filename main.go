@@ -74,14 +74,13 @@ func main() {
 		close(duplChan)
 	}()
 
-	var p printer.Printer
+	newPrinter := printer.NewText
 	if *html {
-		p = printer.NewHTMLPrinter(os.Stdout, fileReader{})
+		newPrinter = printer.NewHTML
 	} else if *plumbing {
-		p = printer.NewPlumbingPrinter(os.Stdout, fileReader{})
-	} else {
-		p = printer.NewTextPrinter(os.Stdout, fileReader{})
+		newPrinter = printer.NewPlumbing
 	}
+	p := newPrinter(os.Stdout, fileReader{})
 	if err := printDupls(p, duplChan); err != nil {
 		log.Fatal(err)
 	}

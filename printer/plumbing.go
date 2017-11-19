@@ -8,26 +8,27 @@ import (
 	"github.com/mibk/dupl/syntax"
 )
 
-type PlumbingPrinter struct {
-	*TextPrinter
+type plumbing struct {
+	w       io.Writer
+	freader FileReader
 }
 
-func NewPlumbingPrinter(w io.Writer, fr FileReader) *PlumbingPrinter {
-	return &PlumbingPrinter{NewTextPrinter(w, fr)}
+func NewPlumbing(w io.Writer, fr FileReader) Printer {
+	return &plumbing{w, fr}
 }
 
-func (p *PlumbingPrinter) Print(dups [][]*syntax.Node) error {
-	clones, err := p.prepareClonesInfo(dups)
+func (p *plumbing) Print(dups [][]*syntax.Node) error {
+	clones, err := prepareClonesInfo(p.freader, dups)
 	if err != nil {
 		return err
 	}
 	sort.Sort(byNameAndLine(clones))
 	for i, cl := range clones {
 		nextCl := clones[(i+1)%len(clones)]
-		fmt.Fprintf(p.writer, "%s:%d-%d: duplicate of %s:%d-%d\n", cl.filename, cl.lineStart, cl.lineEnd,
+		fmt.Fprintf(p.w, "%s:%d-%d: duplicate of %s:%d-%d\n", cl.filename, cl.lineStart, cl.lineEnd,
 			nextCl.filename, nextCl.lineStart, nextCl.lineEnd)
 	}
 	return nil
 }
 
-func (p *PlumbingPrinter) Finish() error { return nil }
+func (p *plumbing) Finish() error { return nil }
