@@ -14,7 +14,7 @@ type FileReader interface {
 
 type Printer interface {
 	Print(dups [][]*syntax.Node) error
-	Finish()
+	Finish() error
 }
 
 type TextPrinter struct {
@@ -66,8 +66,9 @@ func (p *TextPrinter) prepareClonesInfo(dups [][]*syntax.Node) ([]clone, error) 
 	return clones, nil
 }
 
-func (p *TextPrinter) Finish() {
-	fmt.Fprintf(p.writer, "\nFound total %d clone groups.\n", p.cnt)
+func (p *TextPrinter) Finish() error {
+	_, err := fmt.Fprintf(p.writer, "\nFound total %d clone groups.\n", p.cnt)
+	return err
 }
 
 func blockLines(file []byte, from, to int) (int, int) {

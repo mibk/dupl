@@ -65,7 +65,7 @@ func (p *HTMLPrinter) Print(dups [][]*syntax.Node) error {
 	return nil
 }
 
-func (*HTMLPrinter) Finish() {}
+func (*HTMLPrinter) Finish() error { return nil }
 
 func findLineBeg(file []byte, index int) int {
 	for i := index; i >= 0; i-- {

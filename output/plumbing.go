@@ -30,4 +30,4 @@ func (p *PlumbingPrinter) Print(dups [][]*syntax.Node) error {
 	return nil
 }
 
-func (p *PlumbingPrinter) Finish() {}
+func (p *PlumbingPrinter) Finish() error { return nil }

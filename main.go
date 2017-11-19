@@ -140,7 +140,9 @@ func printDupls(duplChan <-chan syntax.Match) {
 			}
 		}
 	}
-	p.Finish()
+	if err := p.Finish(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getPrinter() output.Printer {
