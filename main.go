@@ -141,15 +141,18 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	}
 	sort.Strings(keys)
 
+	if err := p.PrintHeader(); err != nil {
+		return err
+	}
 	for _, k := range keys {
 		uniq := unique(groups[k])
 		if len(uniq) > 1 {
-			if err := p.Print(uniq); err != nil {
+			if err := p.PrintClones(uniq); err != nil {
 				return err
 			}
 		}
 	}
-	return p.Finish()
+	return p.PrintFooter()
 }
 
 type fileReader struct{}

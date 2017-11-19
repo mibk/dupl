@@ -21,7 +21,9 @@ func NewText(w io.Writer, fr FileReader) Printer {
 	}
 }
 
-func (p *text) Print(dups [][]*syntax.Node) error {
+func (p *text) PrintHeader() error { return nil }
+
+func (p *text) PrintClones(dups [][]*syntax.Node) error {
 	p.cnt++
 	fmt.Fprintf(p.w, "found %d clones:\n", len(dups))
 	clones, err := prepareClonesInfo(p.freader, dups)
@@ -35,7 +37,7 @@ func (p *text) Print(dups [][]*syntax.Node) error {
 	return nil
 }
 
-func (p *text) Finish() error {
+func (p *text) PrintFooter() error {
 	_, err := fmt.Fprintf(p.w, "\nFound total %d clone groups.\n", p.cnt)
 	return err
 }

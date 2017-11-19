@@ -17,7 +17,11 @@ type html struct {
 }
 
 func NewHTML(w io.Writer, fr FileReader) Printer {
-	fmt.Fprint(w, `<!DOCTYPE html>
+	return &html{w: w, freader: fr}
+}
+
+func (p *html) PrintHeader() error {
+	_, err := fmt.Fprint(p.w, `<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title>Duplicates</title>
 <style>
@@ -28,10 +32,10 @@ func NewHTML(w io.Writer, fr FileReader) Printer {
 	}
 </style>
 `)
-	return &html{w: w, freader: fr}
+	return err
 }
 
-func (p *html) Print(dups [][]*syntax.Node) error {
+func (p *html) PrintClones(dups [][]*syntax.Node) error {
 	p.iota++
 	fmt.Fprintf(p.w, "<h1>#%d found %d clones</h1>\n", p.iota, len(dups))
 
@@ -64,7 +68,7 @@ func (p *html) Print(dups [][]*syntax.Node) error {
 	return nil
 }
 
-func (*html) Finish() error { return nil }
+func (*html) PrintFooter() error { return nil }
 
 func findLineBeg(file []byte, index int) int {
 	for i := index; i >= 0; i-- {

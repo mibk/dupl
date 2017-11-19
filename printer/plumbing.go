@@ -17,7 +17,9 @@ func NewPlumbing(w io.Writer, fr FileReader) Printer {
 	return &plumbing{w, fr}
 }
 
-func (p *plumbing) Print(dups [][]*syntax.Node) error {
+func (p *plumbing) PrintHeader() error { return nil }
+
+func (p *plumbing) PrintClones(dups [][]*syntax.Node) error {
 	clones, err := prepareClonesInfo(p.freader, dups)
 	if err != nil {
 		return err
@@ -31,4 +33,4 @@ func (p *plumbing) Print(dups [][]*syntax.Node) error {
 	return nil
 }
 
-func (p *plumbing) Finish() error { return nil }
+func (p *plumbing) PrintFooter() error { return nil }

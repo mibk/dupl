@@ -7,6 +7,7 @@ type FileReader interface {
 }
 
 type Printer interface {
-	Print(dups [][]*syntax.Node) error
-	Finish() error
+	PrintHeader() error
+	PrintClones(dups [][]*syntax.Node) error
+	PrintFooter() error
 }
