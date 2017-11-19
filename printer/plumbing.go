@@ -9,18 +9,18 @@ import (
 )
 
 type plumbing struct {
-	w       io.Writer
-	freader FileReader
+	w io.Writer
+	ReadFile
 }
 
-func NewPlumbing(w io.Writer, fr FileReader) Printer {
-	return &plumbing{w, fr}
+func NewPlumbing(w io.Writer, fread ReadFile) Printer {
+	return &plumbing{w, fread}
 }
 
 func (p *plumbing) PrintHeader() error { return nil }
 
 func (p *plumbing) PrintClones(dups [][]*syntax.Node) error {
-	clones, err := prepareClonesInfo(p.freader, dups)
+	clones, err := prepareClonesInfo(p.ReadFile, dups)
 	if err != nil {
 		return err
 	}

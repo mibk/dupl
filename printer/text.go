@@ -9,16 +9,13 @@ import (
 )
 
 type text struct {
-	w       io.Writer
-	freader FileReader
-	cnt     int
+	cnt int
+	w   io.Writer
+	ReadFile
 }
 
-func NewText(w io.Writer, fr FileReader) Printer {
-	return &text{
-		w:       w,
-		freader: fr,
-	}
+func NewText(w io.Writer, fread ReadFile) Printer {
+	return &text{w: w, ReadFile: fread}
 }
 
 func (p *text) PrintHeader() error { return nil }
@@ -26,7 +23,7 @@ func (p *text) PrintHeader() error { return nil }
 func (p *text) PrintClones(dups [][]*syntax.Node) error {
 	p.cnt++
 	fmt.Fprintf(p.w, "found %d clones:\n", len(dups))
-	clones, err := prepareClonesInfo(p.freader, dups)
+	clones, err := prepareClonesInfo(p.ReadFile, dups)
 	if err != nil {
 		return err
 	}
@@ -42,7 +39,7 @@ func (p *text) PrintFooter() error {
 	return err
 }
 
-func prepareClonesInfo(fr FileReader, dups [][]*syntax.Node) ([]clone, error) {
+func prepareClonesInfo(fread ReadFile, dups [][]*syntax.Node) ([]clone, error) {
 	clones := make([]clone, len(dups))
 	for i, dup := range dups {
 		cnt := len(dup)
@@ -52,7 +49,7 @@ func prepareClonesInfo(fr FileReader, dups [][]*syntax.Node) ([]clone, error) {
 		nstart := dup[0]
 		nend := dup[cnt-1]
 
-		file, err := fr.ReadFile(nstart.Filename)
+		file, err := fread(nstart.Filename)
 		if err != nil {
 			return nil, err
 		}

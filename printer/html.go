@@ -11,13 +11,13 @@ import (
 )
 
 type html struct {
-	w       io.Writer
-	freader FileReader
-	iota    int
+	iota int
+	w    io.Writer
+	ReadFile
 }
 
-func NewHTML(w io.Writer, fr FileReader) Printer {
-	return &html{w: w, freader: fr}
+func NewHTML(w io.Writer, fread ReadFile) Printer {
+	return &html{w: w, ReadFile: fread}
 }
 
 func (p *html) PrintHeader() error {
@@ -48,7 +48,7 @@ func (p *html) PrintClones(dups [][]*syntax.Node) error {
 		nstart := dup[0]
 		nend := dup[cnt-1]
 
-		file, err := p.freader.ReadFile(nstart.Filename)
+		file, err := p.ReadFile(nstart.Filename)
 		if err != nil {
 			return err
 		}

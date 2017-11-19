@@ -80,7 +80,7 @@ func main() {
 	} else if *plumbing {
 		newPrinter = printer.NewPlumbing
 	}
-	p := newPrinter(os.Stdout, fileReader{})
+	p := newPrinter(os.Stdout, ioutil.ReadFile)
 	if err := printDupls(p, duplChan); err != nil {
 		log.Fatal(err)
 	}
@@ -153,12 +153,6 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 		}
 	}
 	return p.PrintFooter()
-}
-
-type fileReader struct{}
-
-func (fileReader) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
 }
 
 func unique(group [][]*syntax.Node) [][]*syntax.Node {
