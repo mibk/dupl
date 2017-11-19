@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/mibk/dupl/job"
-	"github.com/mibk/dupl/output"
+	"github.com/mibk/dupl/printer"
 	"github.com/mibk/dupl/syntax"
 )
 
@@ -74,13 +74,13 @@ func main() {
 		close(duplChan)
 	}()
 
-	var p output.Printer
+	var p printer.Printer
 	if *html {
-		p = output.NewHTMLPrinter(os.Stdout, fileReader{})
+		p = printer.NewHTMLPrinter(os.Stdout, fileReader{})
 	} else if *plumbing {
-		p = output.NewPlumbingPrinter(os.Stdout, fileReader{})
+		p = printer.NewPlumbingPrinter(os.Stdout, fileReader{})
 	} else {
-		p = output.NewTextPrinter(os.Stdout, fileReader{})
+		p = printer.NewTextPrinter(os.Stdout, fileReader{})
 	}
 	if err := printDupls(p, duplChan); err != nil {
 		log.Fatal(err)
@@ -131,7 +131,7 @@ func crawlPaths(paths []string) chan string {
 	return fchan
 }
 
-func printDupls(p output.Printer, duplChan <-chan syntax.Match) error {
+func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	groups := make(map[string][][]*syntax.Node)
 	for dupl := range duplChan {
 		groups[dupl.Hash] = append(groups[dupl.Hash], dupl.Frags...)
