@@ -73,7 +73,18 @@ func main() {
 		}
 		close(duplChan)
 	}()
-	printDupls(duplChan)
+
+	var p output.Printer
+	if *html {
+		p = output.NewHTMLPrinter(os.Stdout, fileReader{})
+	} else if *plumbing {
+		p = output.NewPlumbingPrinter(os.Stdout, fileReader{})
+	} else {
+		p = output.NewTextPrinter(os.Stdout, fileReader{})
+	}
+	if err := printDupls(p, duplChan); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func filesFeed() chan string {
@@ -120,7 +131,7 @@ func crawlPaths(paths []string) chan string {
 	return fchan
 }
 
-func printDupls(duplChan <-chan syntax.Match) {
+func printDupls(p output.Printer, duplChan <-chan syntax.Match) error {
 	groups := make(map[string][][]*syntax.Node)
 	for dupl := range duplChan {
 		groups[dupl.Hash] = append(groups[dupl.Hash], dupl.Frags...)
@@ -131,28 +142,15 @@ func printDupls(duplChan <-chan syntax.Match) {
 	}
 	sort.Strings(keys)
 
-	p := getPrinter()
 	for _, k := range keys {
 		uniq := unique(groups[k])
 		if len(uniq) > 1 {
 			if err := p.Print(uniq); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
 	}
-	if err := p.Finish(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func getPrinter() output.Printer {
-	var fr fileReader
-	if *html {
-		return output.NewHTMLPrinter(os.Stdout, fr)
-	} else if *plumbing {
-		return output.NewPlumbingPrinter(os.Stdout, fr)
-	}
-	return output.NewTextPrinter(os.Stdout, fr)
+	return p.Finish()
 }
 
 type fileReader struct{}
