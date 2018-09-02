@@ -3,7 +3,7 @@ package printer
 import (
 	"sort"
 
-	"github.com/mibk/dupl/syntax"
+	"github.com/golangci/dupl/syntax"
 )
 
 type Clone clone

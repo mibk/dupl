@@ -3,7 +3,7 @@ package syntax
 import (
 	"crypto/sha1"
 
-	"github.com/mibk/dupl/suffixtree"
+	"github.com/golangci/dupl/suffixtree"
 )
 
 type Node struct {

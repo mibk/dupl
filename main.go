@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/mibk/dupl/job"
-	"github.com/mibk/dupl/printer"
-	"github.com/mibk/dupl/syntax"
+	"github.com/golangci/dupl/job"
+	"github.com/golangci/dupl/printer"
+	"github.com/golangci/dupl/syntax"
 )
 
 const defaultThreshold = 15

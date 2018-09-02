@@ -12,7 +12,7 @@ tokens are completely different).
 ## Installation
 
 ```bash
-go get -u github.com/mibk/dupl
+go get -u github.com/golangci/dupl
 ```
 
 ## Usage
@@ -56,7 +56,7 @@ Examples:
 ## Example
 
 The reduced output of this command with the following parameters for the [Docker](https://www.docker.com) source code
-looks like [this](http://htmlpreview.github.io/?https://github.com/mibk/dupl/blob/master/_output_example/docker.html).
+looks like [this](http://htmlpreview.github.io/?https://github.com/golangci/dupl/blob/master/_output_example/docker.html).
 
 ```bash
 $ dupl -t 200 -html >docker.html
