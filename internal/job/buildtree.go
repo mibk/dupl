@@ -1,8 +1,8 @@
 package job
 
 import (
-	"github.com/golangci/dupl/suffixtree"
-	"github.com/golangci/dupl/syntax"
+	"github.com/mibk/dupl/internal/suffixtree"
+	"github.com/mibk/dupl/internal/syntax"
 )
 
 func BuildTree(schan chan []*syntax.Node) (t *suffixtree.STree, d *[]*syntax.Node, done chan bool) {

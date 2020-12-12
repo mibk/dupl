@@ -8,17 +8,17 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/golangci/dupl/syntax"
+	"github.com/mibk/dupl/internal/clones"
+	"github.com/mibk/dupl/internal/syntax"
 )
 
 type htmlprinter struct {
 	iota int
 	w    io.Writer
-	ReadFile
 }
 
-func NewHTML(w io.Writer, fread ReadFile) Printer {
-	return &htmlprinter{w: w, ReadFile: fread}
+func NewHTML(w io.Writer) Printer {
+	return &htmlprinter{w: w}
 }
 
 func (p *htmlprinter) PrintHeader() error {
@@ -40,46 +40,20 @@ func (p *htmlprinter) PrintClones(dups [][]*syntax.Node) error {
 	p.iota++
 	fmt.Fprintf(p.w, "<h1>#%d found %d clones</h1>\n", p.iota, len(dups))
 
-	clones := make([]clone, len(dups))
-	for i, dup := range dups {
-		cnt := len(dup)
-		if cnt == 0 {
-			panic("zero length dup")
-		}
-		nstart := dup[0]
-		nend := dup[cnt-1]
-
-		file, err := p.ReadFile(nstart.Filename)
-		if err != nil {
-			return err
-		}
-
-		lineStart, _ := blockLines(file, nstart.Pos, nend.End)
-		cl := clone{filename: nstart.Filename, lineStart: lineStart}
-		start := findLineBeg(file, nstart.Pos)
-		content := append(toWhitespace(file[start:nstart.Pos]), file[nstart.Pos:nend.End]...)
-		cl.fragment = deindent(content)
-		clones[i] = cl
+	duplicates, err := clones.CreateClones(dups)
+	if err != nil {
+		return err
 	}
 
-	sort.Sort(byNameAndLine(clones))
-	for _, cl := range clones {
-		fmt.Fprintf(p.w, "<h2>%s:%d</h2>\n<pre>%s</pre>\n", cl.filename, cl.lineStart,
-			html.EscapeString(string(cl.fragment)))
+	sort.Sort(clones.ByNameAndLine(duplicates))
+	for _, cl := range duplicates {
+		fmt.Fprintf(p.w, "<h2>%s:%d</h2>\n<pre>%s</pre>\n", cl.Filename, cl.LineStart,
+			html.EscapeString(string(cl.Fragment)))
 	}
 	return nil
 }
 
 func (*htmlprinter) PrintFooter() error { return nil }
-
-func findLineBeg(file []byte, index int) int {
-	for i := index; i >= 0; i-- {
-		if file[i] == '\n' {
-			return i + 1
-		}
-	}
-	return 0
-}
 
 func toWhitespace(str []byte) []byte {
 	var out []byte

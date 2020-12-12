@@ -1,28 +1,31 @@
-package dupl
+package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
-	"github.com/golangci/dupl/job"
-	"github.com/golangci/dupl/printer"
-	"github.com/golangci/dupl/syntax"
+	"github.com/mibk/dupl/internal/job"
+	"github.com/mibk/dupl/internal/printer"
+	"github.com/mibk/dupl/internal/syntax"
 )
 
 const defaultThreshold = 15
 
 var (
-	paths   = []string{"."}
-	vendor  = flag.Bool("dupl.vendor", false, "")
-	verbose = flag.Bool("dupl.verbose", false, "")
-	files   = flag.Bool("dupl.files", false, "")
+	paths     = []string{"."}
+	vendor    = flag.Bool("vendor", false, "")
+	verbose   = flag.Bool("verbose", false, "")
+	threshold = flag.Int("threshold", defaultThreshold, "")
+	files     = flag.Bool("files", false, "")
 
-	html     = flag.Bool("dupl.html", false, "")
-	plumbing = flag.Bool("dupl.plumbing", false, "")
+	html     = flag.Bool("html", false, "")
+	plumbing = flag.Bool("plumbing", false, "")
 )
 
 const (
@@ -31,29 +34,38 @@ const (
 )
 
 func init() {
-	flag.BoolVar(verbose, "dupl.v", false, "alias for -verbose")
+	flag.BoolVar(verbose, "v", false, "alias for -verbose")
+	flag.IntVar(threshold, "t", defaultThreshold, "alias for -threshold")
 }
 
-func Run(files []string, threshold int) ([]printer.Issue, error) {
-	fchan := make(chan string, 1024)
-	go func() {
-		for _, f := range files {
-			fchan <- f
-		}
-		close(fchan)
-	}()
-	schan := job.Parse(fchan)
+func main() {
+	flag.Usage = usage
+	flag.Parse()
+	if *html && *plumbing {
+		log.Fatal("you can have either plumbing or HTML output")
+	}
+	if flag.NArg() > 0 {
+		paths = flag.Args()
+	}
+
+	if *verbose {
+		log.Println("Building suffix tree")
+	}
+	schan := job.Parse(filesFeed())
 	t, data, done := job.BuildTree(schan)
 	<-done
 
 	// finish stream
 	t.Update(&syntax.Node{Type: -1})
 
-	mchan := t.FindDuplOver(threshold)
+	if *verbose {
+		log.Println("Searching for clones")
+	}
+	mchan := t.FindDuplOver(*threshold)
 	duplChan := make(chan syntax.Match)
 	go func() {
 		for m := range mchan {
-			match := syntax.FindSyntaxUnits(*data, m, threshold)
+			match := syntax.FindSyntaxUnits(*data, m, *threshold)
 			if len(match.Frags) > 0 {
 				duplChan <- match
 			}
@@ -61,10 +73,66 @@ func Run(files []string, threshold int) ([]printer.Issue, error) {
 		close(duplChan)
 	}()
 
-	return makeIssues(duplChan)
+	newPrinter := printer.NewText
+	if *html {
+		newPrinter = printer.NewHTML
+	} else if *plumbing {
+		newPrinter = printer.NewPlumbing
+	}
+	p := newPrinter(os.Stdout)
+	if err := printDupls(p, duplChan); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func makeIssues(duplChan <-chan syntax.Match) ([]printer.Issue, error) {
+func filesFeed() chan string {
+	if *files {
+		fchan := make(chan string)
+		go func() {
+			s := bufio.NewScanner(os.Stdin)
+			for s.Scan() {
+				f := s.Text()
+				fchan <- strings.TrimPrefix(f, "./")
+			}
+			close(fchan)
+		}()
+		return fchan
+	}
+	return crawlPaths(paths)
+}
+
+func crawlPaths(paths []string) chan string {
+	fchan := make(chan string)
+	go func() {
+		for _, path := range paths {
+			info, err := os.Lstat(path)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !info.IsDir() {
+				fchan <- path
+				continue
+			}
+			err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+				if !*vendor && (strings.HasPrefix(path, vendorDirPrefix) ||
+					strings.Contains(path, vendorDirInPath)) {
+					return nil
+				}
+				if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
+					fchan <- path
+				}
+				return nil
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		close(fchan)
+	}()
+	return fchan
+}
+
+func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	groups := make(map[string][][]*syntax.Node)
 	for dupl := range duplChan {
 		groups[dupl.Hash] = append(groups[dupl.Hash], dupl.Frags...)
@@ -75,40 +143,18 @@ func makeIssues(duplChan <-chan syntax.Match) ([]printer.Issue, error) {
 	}
 	sort.Strings(keys)
 
-	p := printer.NewPlumbing(ioutil.ReadFile)
-
-	var issues []printer.Issue
+	if err := p.PrintHeader(); err != nil {
+		return err
+	}
 	for _, k := range keys {
-		uniq := unique(groups[k])
+		uniq := syntax.Unique(groups[k])
 		if len(uniq) > 1 {
-			i, err := p.MakeIssues(uniq)
-			if err != nil {
-				return nil, err
+			if err := p.PrintClones(uniq); err != nil {
+				return err
 			}
-			issues = append(issues, i...)
 		}
 	}
-
-	return issues, nil
-}
-
-func unique(group [][]*syntax.Node) [][]*syntax.Node {
-	fileMap := make(map[string]map[int]struct{})
-
-	var newGroup [][]*syntax.Node
-	for _, seq := range group {
-		node := seq[0]
-		file, ok := fileMap[node.Filename]
-		if !ok {
-			file = make(map[int]struct{})
-			fileMap[node.Filename] = file
-		}
-		if _, ok := file[node.Pos]; !ok {
-			file[node.Pos] = struct{}{}
-			newGroup = append(newGroup, seq)
-		}
-	}
-	return newGroup
+	return p.PrintFooter()
 }
 
 func usage() {

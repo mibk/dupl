@@ -5,7 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 
-	"github.com/golangci/dupl/syntax"
+	"github.com/mibk/dupl/internal/syntax"
 )
 
 const (
