@@ -114,7 +114,7 @@ func crawlPaths(paths []string) chan string {
 				fchan <- path
 				continue
 			}
-			filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+			err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 				if !*vendor && (strings.HasPrefix(path, vendorDirPrefix) ||
 					strings.Contains(path, vendorDirInPath)) {
 					return nil
@@ -124,6 +124,9 @@ func crawlPaths(paths []string) chan string {
 				}
 				return nil
 			})
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		close(fchan)
 	}()
