@@ -3,8 +3,8 @@ package job
 import (
 	"log"
 
-	"github.com/mibk/dupl/syntax"
-	"github.com/mibk/dupl/syntax/golang"
+	"github.com/mibk/dupl/internal/syntax"
+	"github.com/mibk/dupl/internal/syntax/golang"
 )
 
 func Parse(fchan chan string) chan []*syntax.Node {

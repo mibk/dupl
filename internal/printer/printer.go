@@ -1,8 +1,6 @@
 package printer
 
-import "github.com/mibk/dupl/syntax"
-
-type ReadFile func(filename string) ([]byte, error)
+import "github.com/mibk/dupl/internal/syntax"
 
 type Printer interface {
 	PrintHeader() error

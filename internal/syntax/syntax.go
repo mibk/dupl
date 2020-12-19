@@ -3,7 +3,7 @@ package syntax
 import (
 	"crypto/sha1"
 
-	"github.com/mibk/dupl/suffixtree"
+	"github.com/mibk/dupl/internal/suffixtree"
 )
 
 type Node struct {
@@ -173,3 +173,23 @@ func hashSeq(nodes []*Node) string {
 	h.Write(bytes)
 	return string(h.Sum(nil))
 }
+
+func Unique(group [][]*Node) [][]*Node {
+	fileMap := make(map[string]map[int]struct{})
+
+	var newGroup [][]*Node
+	for _, seq := range group {
+		node := seq[0]
+		file, ok := fileMap[node.Filename]
+		if !ok {
+			file = make(map[int]struct{})
+			fileMap[node.Filename] = file
+		}
+		if _, ok := file[node.Pos]; !ok {
+			file[node.Pos] = struct{}{}
+			newGroup = append(newGroup, seq)
+		}
+	}
+	return newGroup
+}
+

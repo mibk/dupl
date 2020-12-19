@@ -4,16 +4,15 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/mibk/dupl/job"
-	"github.com/mibk/dupl/printer"
-	"github.com/mibk/dupl/syntax"
+	"github.com/mibk/dupl/internal/job"
+	"github.com/mibk/dupl/internal/printer"
+	"github.com/mibk/dupl/internal/syntax"
 )
 
 const defaultThreshold = 15
@@ -80,7 +79,7 @@ func main() {
 	} else if *plumbing {
 		newPrinter = printer.NewPlumbing
 	}
-	p := newPrinter(os.Stdout, ioutil.ReadFile)
+	p := newPrinter(os.Stdout)
 	if err := printDupls(p, duplChan); err != nil {
 		log.Fatal(err)
 	}
@@ -148,7 +147,7 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 		return err
 	}
 	for _, k := range keys {
-		uniq := unique(groups[k])
+		uniq := syntax.Unique(groups[k])
 		if len(uniq) > 1 {
 			if err := p.PrintClones(uniq); err != nil {
 				return err
@@ -156,25 +155,6 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 		}
 	}
 	return p.PrintFooter()
-}
-
-func unique(group [][]*syntax.Node) [][]*syntax.Node {
-	fileMap := make(map[string]map[int]struct{})
-
-	var newGroup [][]*syntax.Node
-	for _, seq := range group {
-		node := seq[0]
-		file, ok := fileMap[node.Filename]
-		if !ok {
-			file = make(map[int]struct{})
-			fileMap[node.Filename] = file
-		}
-		if _, ok := file[node.Pos]; !ok {
-			file[node.Pos] = struct{}{}
-			newGroup = append(newGroup, seq)
-		}
-	}
-	return newGroup
 }
 
 func usage() {
