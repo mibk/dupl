@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -80,7 +79,7 @@ func main() {
 	} else if *plumbing {
 		newPrinter = printer.NewPlumbing
 	}
-	p := newPrinter(os.Stdout, ioutil.ReadFile)
+	p := newPrinter(os.Stdout, os.ReadFile)
 	if err := printDupls(p, duplChan); err != nil {
 		log.Fatal(err)
 	}
