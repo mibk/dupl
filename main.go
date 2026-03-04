@@ -16,7 +16,7 @@ import (
 	"github.com/mibk/dupl/syntax"
 )
 
-const defaultThreshold = 15
+const defaultThreshold = 100
 
 var (
 	paths     = []string{"."}
@@ -196,16 +196,16 @@ Flags:
   -plumbing
     	plumbing (easy-to-parse) output for consumption by scripts or tools
   -t, -threshold size
-    	minimum token sequence size as a clone (default 15)
+    	minimum token sequence size as a clone (default 100)
   -vendor
     	check files in vendor directory
   -v, -verbose
     	explain what is being done
 
 Examples:
-  dupl -t 100
+  dupl -t 200
     	Search clones in the current directory of size at least
-    	100 tokens.
+    	200 tokens.
   dupl $(find app/ -name '*_test.go')
     	Search for clones in tests in the app directory.
   find app/ -name '*_test.go' |dupl -files
